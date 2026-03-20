@@ -7,6 +7,8 @@ export type IntelCard = {
   value: string;
   source: string;
   sourceUrl?: string;
+  imageUrl?: string;
+  prices?: string[];
 };
 
 export type ConversationPhase = 'idle' | 'research' | 'coach' | 'advisor';
@@ -15,11 +17,4 @@ export type Message = {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
-};
-
-export type SearchResult = {
-  url: string;
-  title: string;
-  description: string;
-  markdown?: string;
 };

@@ -1,10 +1,10 @@
 import { View, Text, Pressable, StyleSheet, Linking } from "react-native";
+import { Image } from "expo-image";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
-  runOnJS,
 } from "react-native-reanimated";
 import { useEffect } from "react";
 
@@ -17,22 +17,18 @@ const TYPE_CONFIG = {
   price: {
     color: Colors.systemGreen,
     label: "Price",
-    icon: "$",
   },
   warning: {
     color: Colors.systemRed,
     label: "Warning",
-    icon: "!",
   },
   alternative: {
     color: Colors.systemBlue,
-    label: "Alternative",
-    icon: "~",
+    label: "Alt",
   },
   leverage: {
     color: Colors.systemYellow,
     label: "Leverage",
-    icon: "^",
   },
 } as const;
 
@@ -59,13 +55,17 @@ export function IntelCard({ card }: Props) {
     if (card.sourceUrl) Linking.openURL(card.sourceUrl);
   };
 
+  const hasPrices = card.prices && card.prices.length > 0;
+  const hasImage = !!card.imageUrl;
+
   return (
     <Animated.View style={animatedStyle}>
       <MaterialCard style={styles.card}>
         <View style={[styles.accent, { backgroundColor: config.color as string }]} />
-        <View style={styles.content}>
+        <View style={styles.body}>
+          {/* Header row: badge + title */}
           <View style={styles.header}>
-            <View style={[styles.typeBadge, { borderColor: config.color as string }]}>
+            <View style={[styles.typeBadge, { backgroundColor: `${config.color}18`, borderColor: config.color as string }]}>
               <Text style={[styles.typeLabel, { color: config.color as string }]}>
                 {config.label}
               </Text>
@@ -74,18 +74,42 @@ export function IntelCard({ card }: Props) {
               {card.title}
             </Text>
           </View>
-          <Text style={styles.value}>{card.value}</Text>
-          {card.sourceUrl ? (
-            <Pressable onPress={handleSourcePress} hitSlop={8}>
-              <Text style={styles.source} numberOfLines={1}>
-                {card.source}
+
+          {/* Image + content row */}
+          <View style={styles.contentRow}>
+            {hasImage && (
+              <Image
+                source={{ uri: card.imageUrl }}
+                style={styles.thumbnail}
+                contentFit="cover"
+                transition={200}
+              />
+            )}
+            <View style={[styles.textContent, !hasImage && styles.textContentFull]}>
+              {/* Price chips */}
+              {hasPrices && (
+                <View style={styles.priceRow}>
+                  {card.prices!.slice(0, 4).map((price, i) => (
+                    <View key={`${price}-${i}`} style={styles.priceChip}>
+                      <Text style={styles.priceText}>{price}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Description */}
+              <Text style={styles.value} numberOfLines={hasPrices ? 2 : 3}>
+                {card.value}
               </Text>
-            </Pressable>
-          ) : (
+            </View>
+          </View>
+
+          {/* Source link */}
+          <Pressable onPress={handleSourcePress} hitSlop={8}>
             <Text style={styles.source} numberOfLines={1}>
               {card.source}
             </Text>
-          )}
+          </Pressable>
         </View>
       </MaterialCard>
     </Animated.View>
@@ -100,42 +124,75 @@ const styles = StyleSheet.create({
   },
   accent: {
     width: 4,
-    borderRadius: Radius.sm,
-    marginRight: Spacing.md,
+    borderTopLeftRadius: Radius.sm,
+    borderBottomLeftRadius: Radius.sm,
   },
-  content: {
+  body: {
     flex: 1,
     paddingVertical: Spacing.md,
-    paddingRight: Spacing.md,
-    gap: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    gap: Spacing.sm,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.sm,
-    flexWrap: "wrap",
   },
   typeBadge: {
     borderWidth: 1,
-    borderRadius: Radius.sm,
-    paddingHorizontal: Spacing.xs,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
   },
   typeLabel: {
     fontSize: FontSize.xs,
-    fontWeight: "600",
+    fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   title: {
     flex: 1,
-    fontSize: FontSize.base,
+    fontSize: FontSize.sm,
     fontWeight: "600",
     color: Colors.foreground as string,
     lineHeight: LineHeight.base,
   },
+  contentRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  thumbnail: {
+    width: 72,
+    height: 72,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.secondary as string,
+  },
+  textContent: {
+    flex: 1,
+    gap: Spacing.xs,
+  },
+  textContentFull: {
+    // No image, full width
+  },
+  priceRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
+  },
+  priceChip: {
+    backgroundColor: "rgba(52, 199, 89, 0.12)",
+    borderRadius: Radius.sm,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 2,
+  },
+  priceText: {
+    fontSize: FontSize.sm,
+    fontWeight: "700",
+    color: Colors.systemGreen as string,
+    fontVariant: ["tabular-nums"],
+  },
   value: {
-    fontSize: FontSize.md,
+    fontSize: FontSize.xs,
     color: Colors.mutedForeground as string,
     lineHeight: LineHeight.base,
   },

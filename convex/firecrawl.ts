@@ -10,6 +10,7 @@ type FirecrawlResult = {
   title?: string;
   description?: string;
   markdown?: string;
+  metadata?: Record<string, string>;
 };
 
 type FirecrawlResponse = {
@@ -23,7 +24,24 @@ export type IntelCard = {
   value: string;
   source: string;
   sourceUrl?: string;
+  imageUrl?: string;
+  prices?: string[];
 };
+
+const PRICE_REGEX = /\$[\d,]+(?:\.\d{2})?/g;
+
+function extractPrices(text: string): string[] {
+  const matches = text.match(PRICE_REGEX) ?? [];
+  // Deduplicate and filter out $0
+  return [...new Set(matches)].filter((p) => p !== '$0' && p !== '$0.00').slice(0, 6);
+}
+
+function extractOgImage(metadata?: Record<string, string>): string | undefined {
+  if (!metadata) return undefined;
+  const img = metadata.ogImage ?? metadata['og:image'];
+  if (!img || img.length < 10) return undefined;
+  return img;
+}
 
 async function firecrawlSearch(body: Record<string, unknown>): Promise<FirecrawlResult[]> {
   const res = await fetch(FIRECRAWL_SEARCH_URL, {
@@ -43,12 +61,20 @@ async function firecrawlSearch(body: Record<string, unknown>): Promise<Firecrawl
 }
 
 function toIntelCard(result: FirecrawlResult, type: string): IntelCard {
+  const description = result.description ?? '';
+  const markdown = result.markdown ?? '';
+  const combinedText = `${description} ${markdown}`;
+  const prices = extractPrices(combinedText);
+  const imageUrl = extractOgImage(result.metadata);
+
   return {
     type,
     title: result.title ?? 'Result',
-    value: result.description ?? result.markdown?.slice(0, 300) ?? '',
+    value: description || markdown.slice(0, 300),
     source: new URL(result.url).hostname,
     sourceUrl: result.url,
+    imageUrl,
+    prices,
   };
 }
 
@@ -75,7 +101,6 @@ export const searchNews = internalAction({
       const results = await firecrawlSearch({
         query,
         limit: FIRECRAWL_SEARCH_LIMIT,
-        sources: ['news'],
         tbs: 'qdr:m',
       });
       return results.map((r) => toIntelCard(r, INTEL_CARD_TYPES.WARNING));
