@@ -48,7 +48,8 @@ export type IntelCard = {
   faviconUrl?: string;
 };
 
-const PRICE_REGEX = /\$[\d,]+(?:\.\d{2})?/g;
+// Match $X,XXX or $X,XXX.XX with at least 2 digits
+const PRICE_REGEX = /\$\d{2,3}(?:,\d{3})*(?:\.\d{2})?/g;
 
 function simpleHash(str: string): string {
   let hash = 0;
