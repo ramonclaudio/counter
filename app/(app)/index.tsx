@@ -105,8 +105,8 @@ function Orb({
       orbMode.value = 2;
       pulse.value = withRepeat(
         withSequence(
-          withTiming(1.03, { duration: 900, easing: Easing.inOut(Easing.sine) }),
-          withTiming(0.98, { duration: 900, easing: Easing.inOut(Easing.sine) }),
+          withTiming(1.03, { duration: 900, easing: Easing.bezier(0.42, 0, 0.58, 1) }),
+          withTiming(0.98, { duration: 900, easing: Easing.bezier(0.42, 0, 0.58, 1) }),
         ),
         -1,
         true,
@@ -118,8 +118,8 @@ function Orb({
       orbMode.value = 0;
       pulse.value = withRepeat(
         withSequence(
-          withTiming(1.02, { duration: 1000, easing: Easing.inOut(Easing.sine) }),
-          withTiming(0.98, { duration: 1000, easing: Easing.inOut(Easing.sine) }),
+          withTiming(1.02, { duration: 1000, easing: Easing.bezier(0.42, 0, 0.58, 1) }),
+          withTiming(0.98, { duration: 1000, easing: Easing.bezier(0.42, 0, 0.58, 1) }),
         ),
         -1,
         true,
