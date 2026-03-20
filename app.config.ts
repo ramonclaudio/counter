@@ -20,5 +20,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-web-browser',
     '@livekit/react-native-expo-plugin',
     '@config-plugins/react-native-webrtc',
+    './plugins/with-auto-signing',
   ],
 });
