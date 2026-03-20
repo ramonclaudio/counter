@@ -78,6 +78,18 @@ function Orb({
       pulse.value = withSpring(1, { damping: 12 });
       ring.value = withTiming(0.3, { duration: 400 });
       colorProgress.value = 0;
+    } else if (isSearching) {
+      orbMode.value = 2;
+      pulse.value = withRepeat(
+        withSequence(
+          withTiming(1.03, { duration: 900, easing: Easing.bezier(0.42, 0, 0.58, 1) }),
+          withTiming(0.98, { duration: 900, easing: Easing.bezier(0.42, 0, 0.58, 1) }),
+        ),
+        -1,
+        true,
+      );
+      ring.value = withTiming(0.5, { duration: 300 });
+      colorProgress.value = 0;
     } else if (isSpeaking) {
       orbMode.value = 1;
       pulse.value = withRepeat(
@@ -101,18 +113,6 @@ function Orb({
         -1,
         false,
       );
-    } else if (isSearching) {
-      orbMode.value = 2;
-      pulse.value = withRepeat(
-        withSequence(
-          withTiming(1.03, { duration: 900, easing: Easing.bezier(0.42, 0, 0.58, 1) }),
-          withTiming(0.98, { duration: 900, easing: Easing.bezier(0.42, 0, 0.58, 1) }),
-        ),
-        -1,
-        true,
-      );
-      ring.value = withTiming(0.5, { duration: 300 });
-      colorProgress.value = 0;
     } else {
       // Listening/connected: gentle breathing
       orbMode.value = 0;
