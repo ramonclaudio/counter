@@ -9,6 +9,8 @@ export type IntelCard = {
   sourceUrl?: string;
   imageUrl?: string;
   prices?: string[];
+  siteName?: string;
+  faviconUrl?: string;
 };
 
 export type ConversationPhase = 'idle' | 'research' | 'coach' | 'advisor';

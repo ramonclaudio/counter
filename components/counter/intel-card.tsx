@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { View, Text, Pressable, StyleSheet, Linking } from "react-native";
 import { Image } from "expo-image";
 import Animated, {
@@ -13,33 +14,23 @@ import { Colors, Radius } from "@/constants/theme";
 import { Spacing, FontSize, LineHeight } from "@/constants/layout";
 import type { IntelCard as IntelCardType } from "@/lib/types";
 
+// Neutral gray-blue placeholder
+const PLACEHOLDER_BLURHASH = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
+
 const TYPE_CONFIG = {
-  price: {
-    color: Colors.systemGreen,
-    label: "Price",
-  },
-  warning: {
-    color: Colors.systemRed,
-    label: "Warning",
-  },
-  alternative: {
-    color: Colors.systemBlue,
-    label: "Alt",
-  },
-  leverage: {
-    color: Colors.systemYellow,
-    label: "Leverage",
-  },
+  price: { color: Colors.systemGreen, label: "Price" },
+  warning: { color: Colors.systemRed, label: "Warning" },
+  alternative: { color: Colors.systemBlue, label: "Alt" },
+  leverage: { color: Colors.systemYellow, label: "Leverage" },
 } as const;
 
-type Props = {
-  card: IntelCardType;
-};
+type Props = { card: IntelCardType };
 
 export function IntelCard({ card }: Props) {
   const config = TYPE_CONFIG[card.type];
   const translateY = useSharedValue(40);
   const opacity = useSharedValue(0);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     translateY.value = withSpring(0, { damping: 18, stiffness: 200 });
@@ -56,26 +47,23 @@ export function IntelCard({ card }: Props) {
   };
 
   const hasPrices = card.prices && card.prices.length > 0;
-  const hasImage = !!card.imageUrl;
+  const hasImage = !!card.imageUrl && !imageError;
+  const hasFavicon = !!card.faviconUrl;
 
   return (
     <Animated.View style={animatedStyle}>
       <MaterialCard style={styles.card}>
         <View style={[styles.accent, { backgroundColor: config.color as string }]} />
         <View style={styles.body}>
-          {/* Header row: badge + title */}
+          {/* Header: badge + title */}
           <View style={styles.header}>
             <View style={[styles.typeBadge, { backgroundColor: `${config.color}18`, borderColor: config.color as string }]}>
-              <Text style={[styles.typeLabel, { color: config.color as string }]}>
-                {config.label}
-              </Text>
+              <Text style={[styles.typeLabel, { color: config.color as string }]}>{config.label}</Text>
             </View>
-            <Text style={styles.title} numberOfLines={2}>
-              {card.title}
-            </Text>
+            <Text style={styles.title} numberOfLines={2}>{card.title}</Text>
           </View>
 
-          {/* Image + content row */}
+          {/* Content row: image + text */}
           <View style={styles.contentRow}>
             {hasImage && (
               <Image
@@ -83,10 +71,14 @@ export function IntelCard({ card }: Props) {
                 style={styles.thumbnail}
                 contentFit="cover"
                 transition={200}
+                recyclingKey={card.id}
+                placeholder={{ blurhash: PLACEHOLDER_BLURHASH }}
+                placeholderContentFit="cover"
+                cachePolicy="memory-disk"
+                onError={() => setImageError(true)}
               />
             )}
             <View style={[styles.textContent, !hasImage && styles.textContentFull]}>
-              {/* Price chips */}
               {hasPrices && (
                 <View style={styles.priceRow}>
                   {card.prices!.slice(0, 4).map((price, i) => (
@@ -96,18 +88,24 @@ export function IntelCard({ card }: Props) {
                   ))}
                 </View>
               )}
-
-              {/* Description */}
               <Text style={styles.value} numberOfLines={hasPrices ? 2 : 3}>
                 {card.value}
               </Text>
             </View>
           </View>
 
-          {/* Source link */}
-          <Pressable onPress={handleSourcePress} hitSlop={8}>
+          {/* Source row: favicon + hostname */}
+          <Pressable onPress={handleSourcePress} hitSlop={8} style={styles.sourceRow}>
+            {hasFavicon && (
+              <Image
+                source={{ uri: card.faviconUrl }}
+                style={styles.favicon}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+              />
+            )}
             <Text style={styles.source} numberOfLines={1}>
-              {card.source}
+              {card.siteName ?? card.source}
             </Text>
           </Pressable>
         </View>
@@ -171,9 +169,7 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: Spacing.xs,
   },
-  textContentFull: {
-    // No image, full width
-  },
+  textContentFull: {},
   priceRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -195,6 +191,16 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.mutedForeground as string,
     lineHeight: LineHeight.base,
+  },
+  sourceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+  },
+  favicon: {
+    width: 14,
+    height: 14,
+    borderRadius: 3,
   },
   source: {
     fontSize: FontSize.xs,

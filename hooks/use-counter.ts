@@ -27,10 +27,10 @@ export function useCounter() {
   const conversation = useConversation({
     clientTools: {
       updateIntelCards: async ({ cards }: { cards: IntelCard[] }) => {
-        // Ensure every card has a unique id
+        // Server generates deterministic IDs, fallback for agent-generated cards
         const cardsWithIds = cards.map((c, i) => ({
           ...c,
-          id: c.id || `card-${Date.now()}-${i}`,
+          id: c.id || `${c.type || 'card'}-${Date.now()}-${i}`,
         }));
         setIntelCards((prev) => {
           const existingIds = new Set(prev.map((c) => c.id));
