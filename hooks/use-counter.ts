@@ -77,25 +77,24 @@ export function useCounter() {
       const role = (message as any).role ?? message.source;
       if ((role === "ai" || role === "assistant" || role === "agent") && typeof message.message === "string") {
         const lower = message.message.toLowerCase();
-        // Detect search start: match broadly on intent
-        if (
-          lower.includes("let me") ||
+        // Detect search start: short messages with search-intent phrases
+        const isShort = message.message.length < 150;
+        if (isShort && (
+          lower.includes("let me pull") ||
+          lower.includes("let me dig") ||
+          lower.includes("let me search") ||
+          lower.includes("let me run") ||
+          lower.includes("let me check") ||
+          lower.includes("let me look") ||
           lower.includes("searching") ||
           lower.includes("looking up") ||
-          lower.includes("give me") ||
-          lower.includes("on it") ||
-          lower.includes("digging") ||
-          lower.includes("dig up") ||
-          lower.includes("pulling up") ||
-          lower.includes("right now")
-        ) {
-          // Only trigger if message is short (agent announcing search, not delivering results)
-          if (message.message.length < 200) {
-            setIsSearching(true);
-          }
+          lower.includes("digging into") ||
+          (lower.includes("right now") && (lower.includes("dig") || lower.includes("search") || lower.includes("pull")))
+        )) {
+          setIsSearching(true);
         }
-        // Clear searching when agent delivers results or admits failure
-        if (message.message.length > 250 || lower.includes("connection issues")) {
+        // Clear searching when agent delivers long results or admits failure
+        if (message.message.length > 200 || lower.includes("connection issues")) {
           setIsSearching(false);
         }
         const msg: Message = { role: "assistant", content: message.message, timestamp: Date.now() };
