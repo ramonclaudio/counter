@@ -31,8 +31,10 @@
     "plugins": [
       ["expo-router", { "asyncRoutes": { "default": "development" } }],
       "expo-secure-store",
-      "./plugins/with-auto-signing",
-      "expo-web-browser"
+      "expo-web-browser",
+      "@livekit/react-native-expo-plugin",
+      "@config-plugins/react-native-webrtc",
+      "./plugins/with-auto-signing"
     ],
     "experiments": {
       "typedRoutes": true,
