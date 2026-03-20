@@ -89,6 +89,17 @@ export function useCounter() {
         ) {
           setIsSearching(true);
         }
+        // Clear searching when agent delivers results or admits failure
+        if (
+          lower.includes("here's the intel") ||
+          lower.includes("here's what i found") ||
+          lower.includes("i found") ||
+          lower.includes("connection issues") ||
+          lower.includes("updated the intel cards") ||
+          lower.length > 300
+        ) {
+          setIsSearching(false);
+        }
         const msg: Message = { role: "assistant", content: message.message, timestamp: Date.now() };
         setMessages((prev) => [...prev, msg]);
         if (convIdRef.current) {
@@ -102,8 +113,8 @@ export function useCounter() {
         }
       }
     },
-    onModeChange: ({ mode }) => {
-      if (mode === "speaking") setIsSearching(false);
+    onModeChange: () => {
+      // isSearching is cleared only when results arrive via updateIntelCards
     },
     onStatusChange: ({ status }) => {
       if (status === "disconnected") {
