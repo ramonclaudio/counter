@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Expo
+.expo/
+dist/
+expo-env.d.ts
+
+# iOS builds
+ios/
+*.p8
+*.p12
+*.mobileprovision
+
+# macOS
+.DS_Store
+
+# Pack artifacts
+*.tgz
+
+# Bun
+bun-error.*

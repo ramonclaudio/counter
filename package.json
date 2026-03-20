@@ -1,0 +1,79 @@
+{
+  "name": "counter",
+  "main": "expo-router/entry",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "expo start --dev-client",
+    "start": "expo start --dev-client --clear",
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy",
+    "ios": "bun run clean:metro && expo prebuild --clean --platform ios && expo run:ios --no-build-cache",
+    "ios:dev": "expo run:ios",
+    "ios:device": "bun run clean:metro && expo prebuild --clean --platform ios && expo run:ios --device --no-build-cache",
+    "prebuild": "expo prebuild --clean --platform ios",
+    "clean": "rm -rf node_modules ios .expo dist convex/_generated $TMPDIR/metro-* $TMPDIR/haste-map-* $TMPDIR/react-* $TMPDIR/node-compile-cache ~/Library/Developer/Xcode/DerivedData/Counter-* && bun install",
+    "clean:nuclear": "rm -rf node_modules ios .expo dist convex/_generated $TMPDIR/metro-* $TMPDIR/haste-map-* $TMPDIR/react-* $TMPDIR/expo-* $TMPDIR/node-compile-cache $TMPDIR/RN* ~/Library/Developer/Xcode/DerivedData/Counter-* ~/Library/Caches/CocoaPods ~/Library/Caches/com.apple.dt.Xcode && bun install",
+    "clean:metro": "rm -rf $TMPDIR/metro-* $TMPDIR/haste-map-* $TMPDIR/node-compile-cache",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@better-auth/expo": "1.4.21",
+    "@convex-dev/better-auth": "^0.10.13",
+    "@elevenlabs/react-native": "^0.5.11",
+    "@livekit/react-native": "^2.4.1",
+    "@livekit/react-native-webrtc": "^125.0.7",
+    "@react-native-async-storage/async-storage": "3.0.1",
+    "@react-native-community/netinfo": "^12.0.1",
+    "@react-navigation/native": "7.1.31",
+    "better-auth": "1.4.21",
+    "convex": "1.32.0",
+    "convex-helpers": "^0.1.114",
+    "expo": "56.0.0-canary-20260212-4f61309",
+    "expo-application": "56.0.0-canary-20260212-4f61309",
+    "expo-constants": "56.0.0-canary-20260212-4f61309",
+    "expo-dev-client": "56.0.0-canary-20260212-4f61309",
+    "expo-device": "56.0.0-canary-20260212-4f61309",
+    "expo-font": "56.0.0-canary-20260212-4f61309",
+    "expo-glass-effect": "56.0.0-canary-20260212-4f61309",
+    "expo-haptics": "56.0.0-canary-20260212-4f61309",
+    "expo-image": "56.0.0-canary-20260212-4f61309",
+    "expo-linking": "56.0.0-canary-20260212-4f61309",
+    "expo-network": "56.0.0-canary-20260212-4f61309",
+    "expo-router": "56.0.0-canary-20260212-4f61309",
+    "expo-secure-store": "56.0.0-canary-20260212-4f61309",
+    "expo-splash-screen": "56.0.0-canary-20260212-4f61309",
+    "expo-status-bar": "56.0.0-canary-20260212-4f61309",
+    "expo-symbols": "56.0.0-canary-20260212-4f61309",
+    "expo-web-browser": "56.0.0-canary-20260212-4f61309",
+    "livekit-client": "^2.9.5",
+    "react": "19.2.3",
+    "react-native": "0.84.0",
+    "react-native-gesture-handler": "3.0.0-beta.2",
+    "react-native-keyboard-controller": "1.21.0-beta.3",
+    "react-native-reanimated": "4.3.0-nightly-20260225-6b6087770",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "4.25.0-nightly-20260225-85a3c41d3",
+    "react-native-svg": "15.15.3",
+    "react-native-worklets": "0.8.0-nightly-20260225-6b6087770"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.14",
+    "typescript": "~5.9.3"
+  },
+  "private": true,
+  "expo": {
+    "install": {
+      "exclude": [
+        "react-native"
+      ]
+    }
+  },
+  "overrides": {
+    "@react-navigation/core": "7.15.1",
+    "@react-navigation/native": "7.1.31",
+    "@better-auth/passkey": "1.4.21"
+  },
+  "patchedDependencies": {
+    "expo-router@56.0.0-canary-20260212-4f61309": "patches/expo-router@56.0.0-canary-20260212-4f61309.patch"
+  }
+}
