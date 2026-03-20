@@ -216,9 +216,11 @@ export default function ConversationScreen() {
   const handleStart = async () => {
     setIsStarting(true);
     try {
+      console.log("[Counter] Starting session...");
       await startSession();
+      console.log("[Counter] Session started, status:", status);
     } catch (e) {
-      Alert.alert("Connection Failed", "Could not connect to Counter. Try again.");
+      console.error("[Counter] Start failed:", e);
     } finally {
       setIsStarting(false);
     }
@@ -263,6 +265,15 @@ export default function ConversationScreen() {
         )}
         {isConnecting && (
           <Text style={styles.connectingLabel}>Connecting...</Text>
+        )}
+        {isConnected && !isSpeaking && !isSearching && (
+          <Text style={styles.connectingLabel}>Listening...</Text>
+        )}
+        {isConnected && isSpeaking && (
+          <Text style={styles.connectingLabel}>Speaking...</Text>
+        )}
+        {error && (
+          <Text style={[styles.connectingLabel, { color: Colors.systemRed as string }]}>{error}</Text>
         )}
         <SearchIndicator visible={isSearching} />
       </View>
