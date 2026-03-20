@@ -151,8 +151,8 @@ http.route({
       return jsonResponse({ error: 'Failed to get token' }, 502);
     }
 
-    const data = (await res.json()) as { conversation_token: string };
-    return jsonResponse({ conversationToken: data.conversation_token });
+    const data = (await res.json()) as { token: string };
+    return jsonResponse({ conversationToken: data.token });
   }),
 });
 
