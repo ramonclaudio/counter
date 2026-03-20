@@ -101,12 +101,15 @@ export function useCounter() {
 
   const startSession = useCallback(async () => {
     setError(null);
-    const token = await getConversationToken(env.convexSiteUrl);
     // Create a Convex conversation doc before connecting
     const convId = await createConversation({ title: "Conversation" });
     setConversationId(convId);
     convIdRef.current = convId;
-    await conversation.startSession({ conversationToken: token });
+    // Use agentId directly (public agent, simpler than token flow)
+    const agentId = process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID;
+    if (!agentId) throw new Error("Missing EXPO_PUBLIC_ELEVENLABS_AGENT_ID");
+    console.log("[Counter] Connecting to agent:", agentId);
+    await conversation.startSession({ agentId });
   }, [conversation, createConversation]);
 
   const endSession = useCallback(async () => {
