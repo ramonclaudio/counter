@@ -10,7 +10,7 @@ export default function Index() {
 
   useEffect(() => {
     if (isLoading) return;
-    router.replace(isAuthenticated ? '/today' : '/(auth)/sign-in');
+    router.replace(isAuthenticated ? '/(app)' : '/(auth)/sign-in');
   }, [isAuthenticated, isLoading]);
 
   return <View style={{ flex: 1, backgroundColor: colors.background }} />;
