@@ -1,16 +1,28 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useConversation } from "@elevenlabs/react-native";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 
 import { env } from "@/lib/env";
 import { getConversationToken } from "@/lib/elevenlabs";
 import { haptics } from "@/lib/haptics";
-import type { IntelCard, ConversationPhase } from "@/lib/types";
+import type { IntelCard, ConversationPhase, Message } from "@/lib/types";
 
 export function useCounter() {
   const [intelCards, setIntelCards] = useState<IntelCard[]>([]);
   const [conversationPhase, setConversationPhase] = useState<ConversationPhase>("idle");
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [conversationId, setConversationId] = useState<Id<"conversations"> | null>(null);
+
+  const createConversation = useMutation(api.conversations.createConversation);
+  const addMessage = useMutation(api.conversations.addMessage);
+  const updateIntelCardsMutation = useMutation(api.conversations.updateIntelCards);
+
+  // Track convId in a ref so callbacks always see the latest value
+  const convIdRef = useRef<Id<"conversations"> | null>(null);
 
   const conversation = useConversation({
     clientTools: {
@@ -18,7 +30,15 @@ export function useCounter() {
         setIntelCards((prev) => {
           const existingIds = new Set(prev.map((c) => c.id));
           const newCards = cards.filter((c) => !existingIds.has(c.id));
-          return [...prev, ...newCards];
+          const merged = [...prev, ...newCards];
+          // Persist to Convex
+          if (convIdRef.current) {
+            updateIntelCardsMutation({
+              conversationId: convIdRef.current,
+              intelCards: merged,
+            }).catch(() => {});
+          }
+          return merged;
         });
         setIsSearching(false);
         haptics.medium();
@@ -35,6 +55,7 @@ export function useCounter() {
     onConnect: () => {
       setConversationPhase("research");
       setIntelCards([]);
+      setMessages([]);
       setError(null);
     },
     onDisconnect: () => {
@@ -52,6 +73,17 @@ export function useCounter() {
         if (lower.includes("searching") || lower.includes("looking up") || lower.includes("let me check")) {
           setIsSearching(true);
         }
+        const msg: Message = { role: "assistant", content: message.message, timestamp: Date.now() };
+        setMessages((prev) => [...prev, msg]);
+        if (convIdRef.current) {
+          addMessage({ conversationId: convIdRef.current, role: "assistant", content: message.message }).catch(() => {});
+        }
+      } else if (message.source === "user" && typeof message.message === "string") {
+        const msg: Message = { role: "user", content: message.message, timestamp: Date.now() };
+        setMessages((prev) => [...prev, msg]);
+        if (convIdRef.current) {
+          addMessage({ conversationId: convIdRef.current, role: "user", content: message.message }).catch(() => {});
+        }
       }
     },
     onModeChange: ({ mode }) => {
@@ -68,8 +100,12 @@ export function useCounter() {
   const startSession = useCallback(async () => {
     setError(null);
     const token = await getConversationToken(env.convexSiteUrl);
+    // Create a Convex conversation doc before connecting
+    const convId = await createConversation({ title: "Conversation" });
+    setConversationId(convId);
+    convIdRef.current = convId;
     await conversation.startSession({ conversationToken: token });
-  }, [conversation]);
+  }, [conversation, createConversation]);
 
   const endSession = useCallback(async () => {
     await conversation.endSession();
@@ -92,5 +128,7 @@ export function useCounter() {
     conversationPhase,
     isSearching,
     error,
+    messages,
+    conversationId,
   };
 }

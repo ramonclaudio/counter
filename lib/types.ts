@@ -11,6 +11,12 @@ export type IntelCard = {
 
 export type ConversationPhase = 'idle' | 'research' | 'coach' | 'advisor';
 
+export type Message = {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
+};
+
 export type SearchResult = {
   url: string;
   title: string;

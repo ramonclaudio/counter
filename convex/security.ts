@@ -19,4 +19,5 @@ export const rules: Rules<RLSCtx, DataModel> = {
     insert: async ({ user }) => user !== '',
   },
   sessions: ownerRules(),
+  conversations: ownerRules(),
 };

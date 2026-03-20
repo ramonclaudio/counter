@@ -6,7 +6,9 @@ import {
   Pressable,
   Text,
   SafeAreaView,
+  Alert,
 } from "react-native";
+import { router } from "expo-router";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -15,11 +17,14 @@ import Animated, {
   withTiming,
   withSequence,
   interpolate,
+  interpolateColor,
+  Easing,
 } from "react-native-reanimated";
 import { useCounter } from "@/hooks/use-counter";
 import { IntelCard } from "@/components/counter/intel-card";
 import { PhaseBadge } from "@/components/counter/phase-badge";
 import { SearchIndicator } from "@/components/counter/search-indicator";
+import { Transcript } from "@/components/counter/transcript";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors, Radius } from "@/constants/theme";
 import { Spacing, FontSize, TouchTarget, IconSize } from "@/constants/layout";
@@ -28,33 +33,113 @@ import { haptics } from "@/lib/haptics";
 const ORB_SIZE = 180;
 const ORB_RING_SIZE = ORB_SIZE + 40;
 
-function Orb({ isSpeaking, isConnected }: { isSpeaking: boolean; isConnected: boolean }) {
+// Blue shades for speaking color cycling
+const SPEAK_COLORS = ["#0088FF", "#0099FF", "#00AAFF", "#0077EE", "#0055DD"];
+const SEARCH_COLOR = "#F59E0B"; // amber
+
+const DOT_COUNT = 5;
+const DOT_ORBIT_RADIUS = ORB_RING_SIZE / 2 + 16;
+
+function OrbDot({ index, total, rotate }: { index: number; total: number; rotate: Animated.SharedValue<number> }) {
+  const angle = (2 * Math.PI * index) / total;
+  const dotStyle = useAnimatedStyle(() => {
+    const r = rotate.value;
+    const a = angle + r;
+    const x = Math.cos(a) * DOT_ORBIT_RADIUS;
+    const y = Math.sin(a) * DOT_ORBIT_RADIUS;
+    const trailFade = 0.4 + 0.6 * ((index / total + rotate.value / (2 * Math.PI)) % 1);
+    return {
+      transform: [{ translateX: x }, { translateY: y }],
+      opacity: trailFade,
+    };
+  });
+  return <Animated.View style={[styles.orbitDot, dotStyle]} />;
+}
+
+function Orb({
+  isSpeaking,
+  isConnected,
+  isSearching,
+}: {
+  isSpeaking: boolean;
+  isConnected: boolean;
+  isSearching: boolean;
+}) {
   const pulse = useSharedValue(1);
   const ring = useSharedValue(0.6);
+  // 0=idle/listen, 1=speaking, 2=searching, 3=disconnected
+  const orbMode = useSharedValue(0);
+  const colorProgress = useSharedValue(0);
+  const dotRotate = useSharedValue(0);
 
   useEffect(() => {
-    if (isSpeaking) {
+    if (!isConnected) {
+      orbMode.value = 3;
+      pulse.value = withSpring(1, { damping: 12 });
+      ring.value = withTiming(0.3, { duration: 400 });
+      colorProgress.value = 0;
+    } else if (isSpeaking) {
+      orbMode.value = 1;
       pulse.value = withRepeat(
         withSequence(
-          withSpring(1.06, { damping: 8, stiffness: 120 }),
-          withSpring(0.97, { damping: 8, stiffness: 120 }),
+          withSpring(1.09, { damping: 6, stiffness: 140 }),
+          withSpring(0.96, { damping: 6, stiffness: 140 }),
         ),
         -1,
         true,
       );
       ring.value = withRepeat(
         withSequence(
-          withTiming(1, { duration: 700 }),
-          withTiming(0.6, { duration: 700 }),
+          withTiming(1, { duration: 500 }),
+          withTiming(0.55, { duration: 500 }),
         ),
         -1,
         true,
       );
+      colorProgress.value = withRepeat(
+        withTiming(SPEAK_COLORS.length - 1, { duration: 2400, easing: Easing.linear }),
+        -1,
+        false,
+      );
+    } else if (isSearching) {
+      orbMode.value = 2;
+      pulse.value = withRepeat(
+        withSequence(
+          withTiming(1.03, { duration: 900, easing: Easing.inOut(Easing.sine) }),
+          withTiming(0.98, { duration: 900, easing: Easing.inOut(Easing.sine) }),
+        ),
+        -1,
+        true,
+      );
+      ring.value = withTiming(0.5, { duration: 300 });
+      colorProgress.value = 0;
     } else {
-      pulse.value = withSpring(1, { damping: 12 });
-      ring.value = withTiming(isConnected ? 0.8 : 0.3, { duration: 400 });
+      // Listening/connected: gentle breathing
+      orbMode.value = 0;
+      pulse.value = withRepeat(
+        withSequence(
+          withTiming(1.02, { duration: 1000, easing: Easing.inOut(Easing.sine) }),
+          withTiming(0.98, { duration: 1000, easing: Easing.inOut(Easing.sine) }),
+        ),
+        -1,
+        true,
+      );
+      ring.value = withTiming(0.75, { duration: 400 });
+      colorProgress.value = 0;
     }
-  }, [isSpeaking, isConnected]);
+  }, [isSpeaking, isConnected, isSearching]);
+
+  useEffect(() => {
+    if (isSearching) {
+      dotRotate.value = withRepeat(
+        withTiming(2 * Math.PI, { duration: 2000, easing: Easing.linear }),
+        -1,
+        false,
+      );
+    } else {
+      dotRotate.value = withTiming(0, { duration: 300 });
+    }
+  }, [isSearching]);
 
   const orbStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulse.value }],
@@ -62,44 +147,52 @@ function Orb({ isSpeaking, isConnected }: { isSpeaking: boolean; isConnected: bo
 
   const ringStyle = useAnimatedStyle(() => ({
     opacity: ring.value,
-    transform: [
-      {
-        scale: interpolate(ring.value, [0.3, 1], [0.95, 1.05]),
-      },
-    ],
+    transform: [{ scale: interpolate(ring.value, [0.3, 1], [0.95, 1.08]) }],
   }));
 
-  const orbColor = isConnected ? Colors.primary : Colors.systemGray3;
+  // Color lookup table for worklet (no closure over JS vars)
+  const orbColorStyle = useAnimatedStyle(() => {
+    const mode = orbMode.value;
+    if (mode === 3) return { backgroundColor: "#8E8E93", shadowOpacity: 0.15 };
+    if (mode === 2) return { backgroundColor: SEARCH_COLOR, shadowOpacity: 0.5 };
+    if (mode === 1) {
+      // Interpolate across the SPEAK_COLORS palette
+      const progress = colorProgress.value;
+      const color = interpolateColor(
+        progress,
+        [0, 1, 2, 3, 4],
+        SPEAK_COLORS,
+      );
+      return { backgroundColor: color, shadowOpacity: 0.65 };
+    }
+    return { backgroundColor: "#0088FF", shadowOpacity: 0.4 };
+  });
+
+  const ringColor = isSearching ? SEARCH_COLOR : isConnected ? "#0088FF" : "#8E8E93";
+  const shadowColor = isSearching ? SEARCH_COLOR : "#0088FF";
 
   return (
     <View style={styles.orbContainer}>
+      {isSearching &&
+        Array.from({ length: DOT_COUNT }).map((_, i) => (
+          <OrbDot key={i} index={i} total={DOT_COUNT} rotate={dotRotate} />
+        ))}
+      <Animated.View style={[styles.orbRing, ringStyle, { borderColor: ringColor }]} />
       <Animated.View
-        style={[
-          styles.orbRing,
-          ringStyle,
-          { borderColor: orbColor as string },
-        ]}
-      />
-      <Animated.View
-        style={[
-          styles.orb,
-          orbStyle,
-          {
-            backgroundColor: orbColor as string,
-            shadowColor: orbColor as string,
-          },
-        ]}
+        style={[styles.orb, orbStyle, orbColorStyle, { shadowColor }]}
       />
     </View>
   );
 }
 
 export default function ConversationScreen() {
-  const { startSession, endSession, toggleMicMuted, status, isSpeaking, intelCards, conversationPhase, isSearching, error } =
+  const { startSession, endSession, toggleMicMuted, status, isSpeaking, intelCards, conversationPhase, isSearching, error, messages } =
     useCounter();
   const [micMuted, setMicMutedState] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [activeTab, setActiveTab] = useState<"intel" | "chat">("intel");
   const scrollRef = useRef<ScrollView>(null);
+  const prevSearching = useRef(false);
 
   const isConnected = status === "connected";
   const isConnecting = status === "connecting";
@@ -109,6 +202,16 @@ export default function ConversationScreen() {
       scrollRef.current?.scrollToEnd({ animated: true });
     }
   }, [intelCards.length]);
+
+  // Haptic feedback when search starts: 3 quick light taps
+  useEffect(() => {
+    if (isSearching && !prevSearching.current) {
+      haptics.light();
+      setTimeout(() => haptics.light(), 100);
+      setTimeout(() => haptics.light(), 200);
+    }
+    prevSearching.current = isSearching;
+  }, [isSearching]);
 
   const handleStart = async () => {
     setIsStarting(true);
@@ -139,12 +242,22 @@ export default function ConversationScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.wordmark}>Counter</Text>
-        {isConnected && <PhaseBadge phase={conversationPhase} />}
+        <View style={styles.headerRight}>
+          {isConnected && <PhaseBadge phase={conversationPhase} />}
+          <Pressable
+            onPress={() => router.push("/(app)/history")}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="View history"
+          >
+            <IconSymbol name="clock" size={IconSize.xl} color={Colors.mutedForeground as string} />
+          </Pressable>
+        </View>
       </View>
 
       {/* Orb area */}
       <View style={styles.orbArea}>
-        <Orb isSpeaking={isSpeaking} isConnected={isConnected} />
+        <Orb isSpeaking={isSpeaking} isConnected={isConnected} isSearching={isSearching} />
         {!isConnected && !isConnecting && (
           <Text style={styles.tagline}>AI deal intelligence, in your corner.</Text>
         )}
@@ -154,23 +267,45 @@ export default function ConversationScreen() {
         <SearchIndicator visible={isSearching} />
       </View>
 
-      {/* Intel cards */}
+      {/* Content area (intel / chat) */}
       {isConnected && (
-        <ScrollView
-          ref={scrollRef}
-          style={styles.cardsScroll}
-          contentContainerStyle={styles.cardsContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {intelCards.length === 0 && !isSearching && (
-            <Text style={styles.emptyHint}>
-              Tell me what you're buying. I'll find everything you need to know.
-            </Text>
+        <View style={styles.contentArea}>
+          {/* Tab toggle */}
+          <View style={styles.tabBar}>
+            <Pressable
+              style={[styles.tab, activeTab === "intel" && styles.tabActive]}
+              onPress={() => { setActiveTab("intel"); haptics.selection(); }}
+            >
+              <Text style={[styles.tabLabel, activeTab === "intel" && styles.tabLabelActive]}>Intel</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.tab, activeTab === "chat" && styles.tabActive]}
+              onPress={() => { setActiveTab("chat"); haptics.selection(); }}
+            >
+              <Text style={[styles.tabLabel, activeTab === "chat" && styles.tabLabelActive]}>Chat</Text>
+            </Pressable>
+          </View>
+
+          {activeTab === "intel" ? (
+            <ScrollView
+              ref={scrollRef}
+              style={styles.cardsScroll}
+              contentContainerStyle={styles.cardsContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {intelCards.length === 0 && !isSearching && (
+                <Text style={styles.emptyHint}>
+                  Tell me what you're buying. I'll find everything you need to know.
+                </Text>
+              )}
+              {intelCards.map((card) => (
+                <IntelCard key={card.id} card={card} />
+              ))}
+            </ScrollView>
+          ) : (
+            <Transcript messages={messages} />
           )}
-          {intelCards.map((card) => (
-            <IntelCard key={card.id} card={card} />
-          ))}
-        </ScrollView>
+        </View>
       )}
 
       {/* Controls */}
@@ -235,6 +370,11 @@ const styles = StyleSheet.create({
     color: Colors.foreground as string,
     letterSpacing: -0.5,
   },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
   orbArea: {
     flex: 1,
     alignItems: "center",
@@ -242,8 +382,8 @@ const styles = StyleSheet.create({
     gap: Spacing.lg,
   },
   orbContainer: {
-    width: ORB_RING_SIZE,
-    height: ORB_RING_SIZE,
+    width: ORB_RING_SIZE + 40,
+    height: ORB_RING_SIZE + 40,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -258,10 +398,17 @@ const styles = StyleSheet.create({
     width: ORB_SIZE,
     height: ORB_SIZE,
     borderRadius: ORB_SIZE / 2,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.45,
-    shadowRadius: 32,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 42,
+    elevation: 14,
+  },
+  orbitDot: {
+    position: "absolute",
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: SEARCH_COLOR,
   },
   tagline: {
     fontSize: FontSize.base,
@@ -274,9 +421,43 @@ const styles = StyleSheet.create({
     fontSize: FontSize.base,
     color: Colors.mutedForeground as string,
   },
+  contentArea: {
+    flex: 1,
+    maxHeight: 360,
+  },
+  tabBar: {
+    flexDirection: "row",
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+    backgroundColor: Colors.secondarySystemFill as string,
+    borderRadius: Radius.lg,
+    padding: 3,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: Spacing.xs + 2,
+    alignItems: "center",
+    borderRadius: Radius.md + 2,
+  },
+  tabActive: {
+    backgroundColor: Colors.background as string,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  tabLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: "500",
+    color: Colors.mutedForeground as string,
+  },
+  tabLabelActive: {
+    color: Colors.foreground as string,
+    fontWeight: "600",
+  },
   cardsScroll: {
     flex: 1,
-    maxHeight: 340,
   },
   cardsContent: {
     paddingHorizontal: Spacing.lg,

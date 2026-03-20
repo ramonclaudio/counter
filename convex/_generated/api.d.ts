@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as cache from "../cache.js";
 import type * as constants from "../constants.js";
+import type * as conversations from "../conversations.js";
 import type * as email from "../email.js";
 import type * as emailTemplates from "../emailTemplates.js";
 import type * as env from "../env.js";
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   cache: typeof cache;
   constants: typeof constants;
+  conversations: typeof conversations;
   email: typeof email;
   emailTemplates: typeof emailTemplates;
   env: typeof env;

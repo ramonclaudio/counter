@@ -29,6 +29,8 @@ export default function AppLayout() {
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
+        <Stack.Screen name="history" options={{ headerShown: false }} />
+        <Stack.Screen name="conversation/[id]" options={{ headerShown: false }} />
       </Stack>
     </View>
   );

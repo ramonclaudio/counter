@@ -24,4 +24,19 @@ export default defineSchema({
     ),
     createdAt: v.number(),
   }).index('by_user', ['userId']),
+
+  conversations: defineTable({
+    userId: v.string(),
+    title: v.string(),
+    messages: v.array(
+      v.object({
+        role: v.string(),
+        content: v.string(),
+        timestamp: v.number(),
+      }),
+    ),
+    intelCards: v.array(v.any()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index('by_user', ['userId']),
 });
