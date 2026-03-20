@@ -77,27 +77,25 @@ export function useCounter() {
       const role = (message as any).role ?? message.source;
       if ((role === "ai" || role === "assistant" || role === "agent") && typeof message.message === "string") {
         const lower = message.message.toLowerCase();
+        // Detect search start: match broadly on intent
         if (
+          lower.includes("let me") ||
           lower.includes("searching") ||
           lower.includes("looking up") ||
-          lower.includes("let me check") ||
-          lower.includes("let me pull") ||
-          lower.includes("let me run") ||
-          lower.includes("let me search") ||
-          lower.includes("give me just a second") ||
-          lower.includes("on it")
+          lower.includes("give me") ||
+          lower.includes("on it") ||
+          lower.includes("digging") ||
+          lower.includes("dig up") ||
+          lower.includes("pulling up") ||
+          lower.includes("right now")
         ) {
-          setIsSearching(true);
+          // Only trigger if message is short (agent announcing search, not delivering results)
+          if (message.message.length < 200) {
+            setIsSearching(true);
+          }
         }
         // Clear searching when agent delivers results or admits failure
-        if (
-          lower.includes("here's the intel") ||
-          lower.includes("here's what i found") ||
-          lower.includes("i found") ||
-          lower.includes("connection issues") ||
-          lower.includes("updated the intel cards") ||
-          lower.length > 300
-        ) {
+        if (message.message.length > 250 || lower.includes("connection issues")) {
           setIsSearching(false);
         }
         const msg: Message = { role: "assistant", content: message.message, timestamp: Date.now() };
