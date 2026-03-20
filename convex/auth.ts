@@ -1,6 +1,8 @@
 import { createClient, type GenericCtx } from '@convex-dev/better-auth';
 import { convex, crossDomain } from '@convex-dev/better-auth/plugins';
 import { betterAuth, type BetterAuthOptions } from 'better-auth/minimal';
+import { username } from 'better-auth/plugins';
+import { emailOTP } from 'better-auth/plugins';
 import { expo } from '@better-auth/expo';
 import { components } from './_generated/api';
 import { DataModel } from './_generated/dataModel';
@@ -44,6 +46,13 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => betterAuth({
     },
   },
   plugins: [
+    username(),
+    emailOTP({
+      sendVerificationOTP: async ({ email: _email, otp: _otp }) => {
+        // For hackathon: skip actual email sending, auto-verify
+        console.log('OTP requested (no email service configured)');
+      },
+    }),
     expo(),
     convex({ authConfig }),
     crossDomain({ siteUrl: env.siteUrl }),
