@@ -10,6 +10,7 @@ export function useCounter() {
   const [intelCards, setIntelCards] = useState<IntelCard[]>([]);
   const [conversationPhase, setConversationPhase] = useState<ConversationPhase>("idle");
   const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const conversation = useConversation({
     clientTools: {
@@ -34,15 +35,21 @@ export function useCounter() {
     onConnect: () => {
       setConversationPhase("research");
       setIntelCards([]);
+      setError(null);
     },
     onDisconnect: () => {
       setConversationPhase("idle");
       setIsSearching(false);
     },
+    onError: (message) => {
+      console.error("[Counter] Error:", message);
+      setError(typeof message === "string" ? message : "Connection error");
+      setIsSearching(false);
+    },
     onMessage: (message) => {
       if (message.source === "ai" && typeof message.message === "string") {
         const lower = message.message.toLowerCase();
-        if (lower.includes("searching") || lower.includes("looking up")) {
+        if (lower.includes("searching") || lower.includes("looking up") || lower.includes("let me check")) {
           setIsSearching(true);
         }
       }
@@ -50,9 +57,16 @@ export function useCounter() {
     onModeChange: ({ mode }) => {
       if (mode === "speaking") setIsSearching(false);
     },
+    onStatusChange: ({ status }) => {
+      if (status === "disconnected") {
+        setConversationPhase("idle");
+        setIsSearching(false);
+      }
+    },
   });
 
   const startSession = useCallback(async () => {
+    setError(null);
     const token = await getConversationToken(env.convexSiteUrl);
     await conversation.startSession({ conversationToken: token });
   }, [conversation]);
@@ -61,9 +75,9 @@ export function useCounter() {
     await conversation.endSession();
   }, [conversation]);
 
-  const setMicMuted = useCallback(
+  const toggleMicMuted = useCallback(
     (muted: boolean) => {
-      conversation.setVolume({ volume: muted ? 0 : 1 });
+      conversation.setMicMuted(muted);
     },
     [conversation],
   );
@@ -71,11 +85,12 @@ export function useCounter() {
   return {
     startSession,
     endSession,
-    setMicMuted,
+    toggleMicMuted,
     status: conversation.status,
     isSpeaking: conversation.isSpeaking,
     intelCards,
     conversationPhase,
     isSearching,
+    error,
   };
 }

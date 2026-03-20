@@ -16,8 +16,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     'expo-router',
-    'expo-splash-screen',
     'expo-secure-store',
     'expo-web-browser',
+    '@livekit/react-native-expo-plugin',
+    '@config-plugins/react-native-webrtc',
   ],
 });

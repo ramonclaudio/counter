@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Pressable,
   Text,
-  Alert,
   SafeAreaView,
 } from "react-native";
 import Animated, {
@@ -17,8 +16,6 @@ import Animated, {
   withSequence,
   interpolate,
 } from "react-native-reanimated";
-import { Audio } from "expo-av";
-
 import { useCounter } from "@/hooks/use-counter";
 import { IntelCard } from "@/components/counter/intel-card";
 import { PhaseBadge } from "@/components/counter/phase-badge";
@@ -98,7 +95,7 @@ function Orb({ isSpeaking, isConnected }: { isSpeaking: boolean; isConnected: bo
 }
 
 export default function ConversationScreen() {
-  const { startSession, endSession, setMicMuted, status, isSpeaking, intelCards, conversationPhase, isSearching } =
+  const { startSession, endSession, toggleMicMuted, status, isSpeaking, intelCards, conversationPhase, isSearching, error } =
     useCounter();
   const [micMuted, setMicMutedState] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
@@ -113,21 +110,7 @@ export default function ConversationScreen() {
     }
   }, [intelCards.length]);
 
-  const requestMicPermission = async (): Promise<boolean> => {
-    const { granted } = await Audio.requestPermissionsAsync();
-    return granted;
-  };
-
   const handleStart = async () => {
-    const granted = await requestMicPermission();
-    if (!granted) {
-      Alert.alert(
-        "Microphone Required",
-        "Counter needs microphone access for voice conversations.",
-        [{ text: "OK" }],
-      );
-      return;
-    }
     setIsStarting(true);
     try {
       await startSession();
@@ -147,7 +130,7 @@ export default function ConversationScreen() {
   const handleMicToggle = () => {
     const next = !micMuted;
     setMicMutedState(next);
-    setMicMuted(next);
+    toggleMicMuted(next);
     haptics.light();
   };
 
