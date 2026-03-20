@@ -3,7 +3,7 @@ import { v } from 'convex/values';
 import { firecrawlApiKey } from './env';
 import { FIRECRAWL_SEARCH_LIMIT, INTEL_CARD_TYPES } from './constants';
 
-const FIRECRAWL_SEARCH_URL = 'https://api.firecrawl.dev/v1/search';
+const FIRECRAWL_SEARCH_URL = 'https://api.firecrawl.dev/v2/search';
 
 type FirecrawlMetadata = {
   title?: string;
@@ -28,7 +28,11 @@ type FirecrawlResult = {
 
 type FirecrawlResponse = {
   success: boolean;
-  data: FirecrawlResult[];
+  data: {
+    web?: FirecrawlResult[];
+    news?: FirecrawlResult[];
+    images?: Array<{ imageUrl: string; url: string; title?: string }>;
+  };
 };
 
 export type IntelCard = {
@@ -85,8 +89,9 @@ async function firecrawlSearch(body: Record<string, unknown>): Promise<Firecrawl
   if (!res.ok) return [];
 
   const json = (await res.json()) as FirecrawlResponse;
-  if (!json.success || !Array.isArray(json.data)) return [];
-  return json.data;
+  if (!json.success || !json.data) return [];
+  // v2 nests results under data.web / data.news
+  return json.data.web ?? json.data.news ?? [];
 }
 
 function toIntelCard(result: FirecrawlResult, type: string): IntelCard {
