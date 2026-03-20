@@ -266,16 +266,18 @@ export default function ConversationScreen() {
         {isConnecting && (
           <Text style={styles.connectingLabel}>Connecting...</Text>
         )}
-        {isConnected && !isSpeaking && !isSearching && (
+        {isConnected && isSearching && (
+          <SearchIndicator visible />
+        )}
+        {isConnected && !isSearching && !isSpeaking && (
           <Text style={styles.connectingLabel}>Listening...</Text>
         )}
-        {isConnected && isSpeaking && (
+        {isConnected && !isSearching && isSpeaking && (
           <Text style={styles.connectingLabel}>Speaking...</Text>
         )}
         {error && (
           <Text style={[styles.connectingLabel, { color: Colors.systemRed as string }]}>{error}</Text>
         )}
-        <SearchIndicator visible={isSearching} />
       </View>
 
       {/* Content area (intel / chat) */}

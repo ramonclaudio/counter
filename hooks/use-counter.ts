@@ -77,7 +77,16 @@ export function useCounter() {
       const role = (message as any).role ?? message.source;
       if ((role === "ai" || role === "assistant" || role === "agent") && typeof message.message === "string") {
         const lower = message.message.toLowerCase();
-        if (lower.includes("searching") || lower.includes("looking up") || lower.includes("let me check")) {
+        if (
+          lower.includes("searching") ||
+          lower.includes("looking up") ||
+          lower.includes("let me check") ||
+          lower.includes("let me pull") ||
+          lower.includes("let me run") ||
+          lower.includes("let me search") ||
+          lower.includes("give me just a second") ||
+          lower.includes("on it")
+        ) {
           setIsSearching(true);
         }
         const msg: Message = { role: "assistant", content: message.message, timestamp: Date.now() };
