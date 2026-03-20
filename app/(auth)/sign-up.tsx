@@ -62,6 +62,8 @@ export default function SignUpScreen() {
         setError("Unable to create account. Please try a different email or username.");
       } else {
         haptics.success();
+        // Explicitly send OTP after sign-up
+        await authClient.emailOtp.sendVerificationOtp({ email: email.trim() }).catch(() => {});
         setShowVerification(true);
       }
     } catch {
