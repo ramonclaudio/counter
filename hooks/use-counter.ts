@@ -27,9 +27,14 @@ export function useCounter() {
   const conversation = useConversation({
     clientTools: {
       updateIntelCards: async ({ cards }: { cards: IntelCard[] }) => {
+        // Ensure every card has a unique id
+        const cardsWithIds = cards.map((c, i) => ({
+          ...c,
+          id: c.id || `card-${Date.now()}-${i}`,
+        }));
         setIntelCards((prev) => {
           const existingIds = new Set(prev.map((c) => c.id));
-          const newCards = cards.filter((c) => !existingIds.has(c.id));
+          const newCards = cardsWithIds.filter((c) => !existingIds.has(c.id));
           const merged = [...prev, ...newCards];
           // Persist to Convex
           if (convIdRef.current) {
