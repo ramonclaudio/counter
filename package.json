@@ -20,6 +20,7 @@
     "@better-auth/expo": "1.4.21",
     "@config-plugins/react-native-webrtc": "^13.0.0",
     "@convex-dev/better-auth": "^0.10.13",
+    "@convex-dev/resend": "^0.2.3",
     "@elevenlabs/react-native": "^0.5.11",
     "@livekit/react-native": "^2.4.1",
     "@livekit/react-native-expo-plugin": "^1.0.2",

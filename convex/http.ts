@@ -2,12 +2,19 @@ import { httpRouter } from 'convex/server';
 import { httpAction } from './_generated/server';
 import { internal } from './_generated/api';
 import { authComponent, createAuth } from './auth';
+import { resend } from './email';
 import { webhookSecret, elevenlabsApiKey, elevenlabsAgentId } from './env';
 import { SEARCH_TYPES } from './constants';
 
 const http = httpRouter();
 
 authComponent.registerRoutes(http, createAuth, { cors: true });
+
+http.route({
+  path: '/resend-webhook',
+  method: 'POST',
+  handler: httpAction((ctx, req) => resend.handleResendEventWebhook(ctx, req)),
+});
 
 const privacyUrl = 'https://ramonclaudio.com/apps/counter/privacy';
 const termsUrl = 'https://ramonclaudio.com/apps/counter/terms';

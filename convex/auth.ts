@@ -1,13 +1,14 @@
 import { createClient, type GenericCtx } from '@convex-dev/better-auth';
+import { requireActionCtx } from '@convex-dev/better-auth/utils';
 import { convex, crossDomain } from '@convex-dev/better-auth/plugins';
 import { betterAuth, type BetterAuthOptions } from 'better-auth/minimal';
-import { username } from 'better-auth/plugins';
-import { emailOTP } from 'better-auth/plugins';
+import { username, emailOTP } from 'better-auth/plugins';
 import { expo } from '@better-auth/expo';
 import { components } from './_generated/api';
 import { DataModel } from './_generated/dataModel';
 import { query } from './_generated/server';
 import authConfig from './auth.config';
+import { sendOTPVerification, sendResetPassword } from './email';
 import { env } from './env';
 
 export const authComponent = createClient<DataModel>(components.betterAuth);
@@ -26,12 +27,16 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => betterAuth({
   database: authComponent.adapter(ctx),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false,
+    requireEmailVerification: true,
     minPasswordLength: 10,
     maxPasswordLength: 128,
     resetPasswordTokenExpiresIn: ONE_HOUR,
     revokeSessionsOnPasswordReset: true,
+    async sendResetPassword({ user, url }) {
+      await sendResetPassword(requireActionCtx(ctx), { to: user.email, url });
+    },
   },
+  emailVerification: { sendOnSignUp: false },
   session: { expiresIn: SEVEN_DAYS, updateAge: ONE_DAY, cookieCache: { enabled: true, maxAge: ONE_MINUTE * 5 } },
   rateLimit: {
     enabled: true,
@@ -48,9 +53,12 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => betterAuth({
   plugins: [
     username(),
     emailOTP({
-      sendVerificationOTP: async ({ email: _email, otp: _otp }) => {
-        // For hackathon: skip actual email sending, auto-verify
-        console.log('OTP requested (no email service configured)');
+      otpLength: 6,
+      expiresIn: 300,
+      sendVerificationOnSignUp: true,
+      overrideDefaultEmailVerification: true,
+      async sendVerificationOTP({ email, otp }) {
+        await sendOTPVerification(requireActionCtx(ctx), { to: email, otp });
       },
     }),
     expo(),
