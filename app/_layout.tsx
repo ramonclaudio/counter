@@ -14,7 +14,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import "react-native-reanimated";
 import { ElevenLabsProvider } from "@elevenlabs/react-native";
-import { registerGlobals, AudioSession } from "@livekit/react-native";
+import { registerGlobals } from "@livekit/react-native";
 
 import { authClient } from "@/lib/auth-client";
 import { env } from "@/lib/env";
@@ -23,12 +23,6 @@ import { OfflineBanner } from "@/components/ui/offline-banner";
 import { Duration } from "@/constants/ui";
 
 registerGlobals();
-
-// Configure and start audio session for WebRTC playback
-AudioSession.configureAudio({
-  android: { preferredOutputList: ["speaker"] },
-  ios: { defaultOutput: "speaker" },
-}).then(() => AudioSession.startAudioSession());
 
 const convex = new ConvexReactClient(env.convexUrl, {
   expectAuth: true,
@@ -45,7 +39,7 @@ export const unstable_settings = { initialRouteName: "(auth)" };
 export default function RootLayout() {
   return (
     <ConvexBetterAuthProvider client={convex} authClient={authClient}>
-      <ElevenLabsProvider audioSessionConfig={{ allowMixingWithOthers: true }}>
+      <ElevenLabsProvider>
         <RootNavigator />
       </ElevenLabsProvider>
     </ConvexBetterAuthProvider>
