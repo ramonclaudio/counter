@@ -14,25 +14,36 @@ type FirecrawlMetadata = {
   ogTitle?: string;
   ogDescription?: string;
   ogSiteName?: string;
-  favicon?: string;
   statusCode?: number;
 };
 
-type FirecrawlResult = {
+type FirecrawlWebResult = {
   url: string;
   title?: string;
   description?: string;
   markdown?: string;
   metadata?: FirecrawlMetadata;
+  position?: number;
+};
+
+type FirecrawlNewsResult = {
+  url: string;
+  title?: string;
+  snippet?: string;
+  date?: string;
+  imageUrl?: string;
+  markdown?: string;
+  metadata?: FirecrawlMetadata;
+  position?: number;
 };
 
 type FirecrawlResponse = {
   success: boolean;
   data: {
-    web?: FirecrawlResult[];
-    news?: FirecrawlResult[];
-    images?: Array<{ imageUrl: string; url: string; title?: string }>;
+    web?: FirecrawlWebResult[];
+    news?: FirecrawlNewsResult[];
   };
+  creditsUsed?: number;
 };
 
 export type IntelCard = {
@@ -46,9 +57,10 @@ export type IntelCard = {
   prices?: string[];
   siteName?: string;
   faviconUrl?: string;
+  date?: string;
 };
 
-// Match $X,XXX or $X,XXX.XX with at least 2 digits
+// Match $XX+ or $X,XXX patterns (min 2 digits to avoid noise)
 const PRICE_REGEX = /\$\d{2,3}(?:,\d{3})*(?:\.\d{2})?/g;
 
 function simpleHash(str: string): string {
@@ -75,9 +87,20 @@ function getFaviconUrl(hostname: string): string {
   return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
 }
 
-const SCRAPE_OPTIONS = { formats: ['markdown'], onlyMainContent: true };
+function getHostname(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return 'unknown';
+  }
+}
 
-async function firecrawlSearch(body: Record<string, unknown>): Promise<FirecrawlResult[]> {
+const SCRAPE_OPTIONS = {
+  formats: ['markdown'],
+  onlyMainContent: true,
+};
+
+async function firecrawlSearch(body: Record<string, unknown>): Promise<FirecrawlResponse> {
   const res = await fetch(FIRECRAWL_SEARCH_URL, {
     method: 'POST',
     headers: {
@@ -87,29 +110,18 @@ async function firecrawlSearch(body: Record<string, unknown>): Promise<Firecrawl
     body: JSON.stringify(body),
   });
 
-  if (!res.ok) return [];
+  if (!res.ok) return { success: false, data: {} };
 
   const json = (await res.json()) as FirecrawlResponse;
-  if (!json.success || !json.data) return [];
-  // v2 nests results under data.web / data.news
-  return json.data.web ?? json.data.news ?? [];
+  if (!json.success) return { success: false, data: {} };
+  return json;
 }
 
-function toIntelCard(result: FirecrawlResult, type: string): IntelCard {
+function webResultToCard(result: FirecrawlWebResult, type: string): IntelCard {
   const description = result.description ?? '';
   const markdown = result.markdown ?? '';
-  const combinedText = `${description} ${markdown}`;
-  const prices = extractPrices(combinedText);
-  const imageUrl = extractOgImage(result.metadata);
-
-  let hostname: string;
-  try {
-    hostname = new URL(result.url).hostname;
-  } catch {
-    hostname = 'unknown';
-  }
-
-  const siteName = result.metadata?.ogSiteName ?? undefined;
+  const prices = extractPrices(`${description} ${markdown}`);
+  const hostname = getHostname(result.url);
 
   return {
     id: `${type}-${simpleHash(result.url)}`,
@@ -118,10 +130,28 @@ function toIntelCard(result: FirecrawlResult, type: string): IntelCard {
     value: description || markdown.slice(0, 300),
     source: hostname,
     sourceUrl: result.url,
-    imageUrl,
+    imageUrl: extractOgImage(result.metadata),
     prices,
-    siteName,
+    siteName: result.metadata?.ogSiteName ?? undefined,
     faviconUrl: getFaviconUrl(hostname),
+  };
+}
+
+function newsResultToCard(result: FirecrawlNewsResult): IntelCard {
+  const hostname = getHostname(result.url);
+
+  return {
+    id: `warning-${simpleHash(result.url)}`,
+    type: INTEL_CARD_TYPES.WARNING,
+    title: result.title ?? 'News',
+    value: result.snippet ?? result.markdown?.slice(0, 300) ?? '',
+    source: hostname,
+    sourceUrl: result.url,
+    imageUrl: result.imageUrl ?? extractOgImage(result.metadata),
+    prices: [],
+    siteName: result.metadata?.ogSiteName ?? undefined,
+    faviconUrl: getFaviconUrl(hostname),
+    date: result.date,
   };
 }
 
@@ -129,12 +159,14 @@ export const searchMarket = internalAction({
   args: { query: v.string() },
   handler: async (_ctx, { query }): Promise<IntelCard[]> => {
     try {
-      const results = await firecrawlSearch({
+      const response = await firecrawlSearch({
         query,
         limit: FIRECRAWL_SEARCH_LIMIT,
+        sources: [{ type: 'web' }],
         scrapeOptions: SCRAPE_OPTIONS,
       });
-      return results.map((r) => toIntelCard(r, INTEL_CARD_TYPES.PRICE));
+      const results = response.data.web ?? [];
+      return results.map((r) => webResultToCard(r, INTEL_CARD_TYPES.PRICE));
     } catch {
       return [];
     }
@@ -145,13 +177,25 @@ export const searchNews = internalAction({
   args: { query: v.string() },
   handler: async (_ctx, { query }): Promise<IntelCard[]> => {
     try {
-      const results = await firecrawlSearch({
+      const response = await firecrawlSearch({
         query,
         limit: FIRECRAWL_SEARCH_LIMIT,
-        tbs: 'qdr:m',
+        sources: [{ type: 'news' }],
         scrapeOptions: SCRAPE_OPTIONS,
       });
-      return results.map((r) => toIntelCard(r, INTEL_CARD_TYPES.WARNING));
+      const newsResults = response.data.news ?? [];
+      if (newsResults.length > 0) {
+        return newsResults.map(newsResultToCard);
+      }
+      // Fallback to web search with time filter if no news results
+      const webResponse = await firecrawlSearch({
+        query,
+        limit: FIRECRAWL_SEARCH_LIMIT,
+        sources: [{ type: 'web', tbs: 'qdr:m' }],
+        scrapeOptions: SCRAPE_OPTIONS,
+      });
+      const webResults = webResponse.data.web ?? [];
+      return webResults.map((r) => webResultToCard(r, INTEL_CARD_TYPES.WARNING));
     } catch {
       return [];
     }
@@ -165,12 +209,14 @@ export const searchAlternatives = internalAction({
       const body: Record<string, unknown> = {
         query,
         limit: FIRECRAWL_SEARCH_LIMIT,
+        sources: [{ type: 'web', location: location ?? undefined }],
         scrapeOptions: SCRAPE_OPTIONS,
       };
       if (location) body.location = location;
 
-      const results = await firecrawlSearch(body);
-      return results.map((r) => toIntelCard(r, INTEL_CARD_TYPES.ALTERNATIVE));
+      const response = await firecrawlSearch(body);
+      const results = response.data.web ?? [];
+      return results.map((r) => webResultToCard(r, INTEL_CARD_TYPES.ALTERNATIVE));
     } catch {
       return [];
     }
