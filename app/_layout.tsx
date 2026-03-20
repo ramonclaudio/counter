@@ -39,7 +39,7 @@ export const unstable_settings = { initialRouteName: "(auth)" };
 export default function RootLayout() {
   return (
     <ConvexBetterAuthProvider client={convex} authClient={authClient}>
-      <ElevenLabsProvider>
+      <ElevenLabsProvider audioSessionConfig={{ allowMixingWithOthers: true }}>
         <RootNavigator />
       </ElevenLabsProvider>
     </ConvexBetterAuthProvider>
