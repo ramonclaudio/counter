@@ -68,7 +68,9 @@ export function useCounter() {
       setIsSearching(false);
     },
     onMessage: (message) => {
-      if (message.source === "ai" && typeof message.message === "string") {
+      if (__DEV__) console.log("[Counter] onMessage:", JSON.stringify(message));
+      const role = (message as any).role ?? message.source;
+      if ((role === "ai" || role === "assistant") && typeof message.message === "string") {
         const lower = message.message.toLowerCase();
         if (lower.includes("searching") || lower.includes("looking up") || lower.includes("let me check")) {
           setIsSearching(true);
@@ -78,7 +80,7 @@ export function useCounter() {
         if (convIdRef.current) {
           addMessage({ conversationId: convIdRef.current, role: "assistant", content: message.message }).catch(() => {});
         }
-      } else if (message.source === "user" && typeof message.message === "string") {
+      } else if ((role === "user") && typeof message.message === "string") {
         const msg: Message = { role: "user", content: message.message, timestamp: Date.now() };
         setMessages((prev) => [...prev, msg]);
         if (convIdRef.current) {
