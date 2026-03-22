@@ -5,6 +5,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useQuery } from "convex/react";
 import { Pressable } from "react-native";
 import { api } from "@/convex/_generated/api";
+import { haptics } from "@/lib/haptics";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useColors } from "@/hooks/use-theme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -66,7 +67,7 @@ export default function ConversationDetailScreen() {
           <View style={styles.tabBar}>
             <Pressable
               style={[styles.tab, activeTab === "transcript" && styles.tabActive]}
-              onPress={() => setActiveTab("transcript")}
+              onPress={() => { haptics.light(); setActiveTab("transcript"); }}
               accessibilityRole="tab"
               accessibilityState={{ selected: activeTab === "transcript" }}
             >
@@ -76,7 +77,7 @@ export default function ConversationDetailScreen() {
             </Pressable>
             <Pressable
               style={[styles.tab, activeTab === "intel" && styles.tabActive]}
-              onPress={() => setActiveTab("intel")}
+              onPress={() => { haptics.light(); setActiveTab("intel"); }}
               accessibilityRole="tab"
               accessibilityState={{ selected: activeTab === "intel" }}
             >

@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors, Radius } from "@/constants/theme";
 import { Spacing, FontSize, LineHeight, IconSize } from "@/constants/layout";
+import { haptics } from "@/lib/haptics";
 
 function formatDate(ts: number): string {
   const d = new Date(ts);
@@ -112,7 +113,7 @@ export default function HistoryScreen() {
             <AnimatedRow key={conv._id} index={index}>
               <Pressable
                 style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-                onPress={() => router.push(`/(app)/conversation/${conv._id}`)}
+                onPress={() => { haptics.light(); router.push(`/(app)/conversation/${conv._id}`); }}
               >
                 <View
                   style={[
