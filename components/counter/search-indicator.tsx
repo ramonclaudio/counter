@@ -10,9 +10,10 @@ import Animated, {
 import { useEffect } from "react";
 
 import { Spacing, FontSize } from "@/constants/layout";
+import { AnimationColors } from "@/constants/theme";
 
-const AMBER = "#F59E0B";
-const AMBER_LIGHT = "#FCD34D";
+const AMBER = AnimationColors.search;
+const AMBER_LIGHT = AnimationColors.searchLight;
 
 function Dot({ delay }: { delay: number }) {
   const scale = useSharedValue(0.6);
@@ -71,18 +72,18 @@ export function SearchIndicator({ visible }: { visible: boolean }) {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
   badge: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.sm,
-    backgroundColor: "rgba(245, 158, 11, 0.12)",
+    backgroundColor: AnimationColors.searchFill,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "rgba(245, 158, 11, 0.25)",
+    borderColor: AnimationColors.searchBorder,
   },
   label: {
     fontSize: FontSize.sm,

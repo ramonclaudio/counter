@@ -1,9 +1,9 @@
 import { View, type ViewProps } from "react-native";
 
-import { Radius } from "@/constants/theme";
+import { Radius, ShadowColor } from "@/constants/theme";
 import { useColors } from "@/hooks/use-theme";
 
-type MaterialCardVariant = 'default' | 'elevated' | 'tinted' | 'outlined';
+type MaterialCardVariant = 'default' | 'elevated' | 'tinted' | 'outlined' | 'flat';
 
 type MaterialCardProps = ViewProps & {
   variant?: MaterialCardVariant;
@@ -50,6 +50,14 @@ export function MaterialCard({
       shadowOpacity: 1,
       shadowRadius: 16,
     },
+    flat: {
+      backgroundColor: colors.card,
+      borderWidth: 0.5,
+      borderColor: colors.separator,
+      shadowColor: ShadowColor,
+      shadowOpacity: 0.04,
+      shadowRadius: 4,
+    },
   }[variant];
 
   return (
@@ -58,7 +66,7 @@ export function MaterialCard({
         {
           borderRadius: Radius.lg,
           borderCurve: "continuous" as const,
-          overflow: "hidden" as const,
+          overflow: "visible" as const,
           shadowOffset: { width: 0, height: 4 },
           elevation: 3,
           ...variantStyles,

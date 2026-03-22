@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-import { Colors, Radius } from "@/constants/theme";
+import { Colors, OnImage, Radius } from "@/constants/theme";
 import { Spacing, FontSize, LineHeight } from "@/constants/layout";
 import type { Message } from "@/lib/types";
 
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     lineHeight: LineHeight.relaxed,
   },
   textUser: {
-    color: "#FFFFFF",
+    color: Colors.onColor,
   },
   textAssistant: {
     color: Colors.foreground as string,
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
   },
   timestampUser: {
-    color: "rgba(255,255,255,0.65)",
+    color: OnImage.quaternary,
   },
   timestampAssistant: {
     color: Colors.tertiaryLabel as string,

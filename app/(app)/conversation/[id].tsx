@@ -8,7 +8,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { useColors } from "@/hooks/use-theme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { IntelCard } from "@/components/counter/intel-card";
-import { Colors, Radius } from "@/constants/theme";
+import { Colors, OnImage, Radius } from "@/constants/theme";
 import { Spacing, FontSize, LineHeight, IconSize } from "@/constants/layout";
 import type { IntelCard as IntelCardType, Message } from "@/lib/types";
 
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     lineHeight: LineHeight.relaxed,
   },
   textUser: {
-    color: "#FFFFFF",
+    color: Colors.onColor,
   },
   textAssistant: {
     color: Colors.foreground as string,
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
   },
   timestampUser: {
-    color: "rgba(255,255,255,0.65)",
+    color: OnImage.quaternary,
   },
   timestampAssistant: {
     color: Colors.tertiaryLabel as string,
