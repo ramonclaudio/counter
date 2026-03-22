@@ -36,7 +36,14 @@ export default defineSchema({
       }),
     ),
     intelCards: v.array(v.any()),
+    summary: v.optional(v.string()),
+    callSuccessful: v.optional(v.boolean()),
+    durationSeconds: v.optional(v.number()),
+    elevenlabsConversationId: v.optional(v.string()),
+    sessionMode: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index('by_user', ['userId']),
+  })
+    .index('by_user', ['userId'])
+    .index('by_elevenlabs_id', ['elevenlabsConversationId']),
 });

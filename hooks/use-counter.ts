@@ -23,6 +23,7 @@ export function useCounter() {
   const addMessage = useMutation(api.conversations.addMessage);
   const updateIntelCardsMutation = useMutation(api.conversations.updateIntelCards);
   const updateTitle = useMutation(api.conversations.updateTitle);
+  const setElevenlabsId = useMutation(api.conversations.setElevenlabsId);
 
   // Track convId in a ref so callbacks always see the latest value
   const convIdRef = useRef<Id<"conversations"> | null>(null);
@@ -88,6 +89,14 @@ export function useCounter() {
       setMessages([]);
       setFeedItems([]);
       setError(null);
+      // Save ElevenLabs conversation ID for post-call webhook matching
+      try {
+        const elId = conversation.getId();
+        if (elId && convIdRef.current) {
+          setElevenlabsId({ conversationId: convIdRef.current, elevenlabsConversationId: elId, sessionMode: sessionModeRef.current })
+            .catch((e) => console.warn('[Counter] setElevenlabsId failed:', e));
+        }
+      } catch { /* getId may not be available yet */ }
       // Inject mode/context after WebRTC data channel stabilizes
       if (pendingContextRef.current) {
         const ctx = pendingContextRef.current;

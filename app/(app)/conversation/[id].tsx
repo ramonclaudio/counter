@@ -87,6 +87,14 @@ export default function ConversationDetailScreen() {
             </Pressable>
           </View>
 
+          {/* AI-generated summary from ElevenLabs post-call webhook */}
+          {conv.summary && (
+            <View style={styles.summaryBanner}>
+              <IconSymbol name="sparkles" size={IconSize.lg} color={AnimationColors.search} />
+              <Text style={styles.summaryText}>{conv.summary}</Text>
+            </View>
+          )}
+
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
@@ -206,6 +214,23 @@ const styles = StyleSheet.create({
   },
   tabTextActive: {
     color: Colors.onColor,
+  },
+  summaryBanner: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.sm,
+    padding: Spacing.md,
+    backgroundColor: AnimationColors.searchFill,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: AnimationColors.searchBorder,
+  },
+  summaryText: {
+    flex: 1,
+    fontSize: FontSize.sm,
+    color: Colors.foreground as string,
+    lineHeight: LineHeight.relaxed,
   },
   center: {
     flex: 1,

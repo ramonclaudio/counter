@@ -144,6 +144,37 @@ http.route({
   }),
 });
 
+// ElevenLabs post-call webhook: saves transcript summary to conversation record
+http.route({
+  path: '/elevenlabs-webhook',
+  method: 'POST',
+  handler: httpAction(async (ctx, req) => {
+    const body = await req.json() as {
+      type?: string;
+      data?: {
+        conversation_id?: string;
+        agent_id?: string;
+        call_duration_secs?: number;
+        analysis?: {
+          call_successful?: string;
+          transcript_summary?: string;
+        };
+      };
+    };
+    if (body.type !== 'post_call_transcription' || !body.data?.conversation_id) {
+      return jsonResponse({ ok: true });
+    }
+    const d = body.data;
+    await ctx.runMutation(internal.conversations.saveWebhookSummary, {
+      elevenlabsConversationId: d.conversation_id!,
+      summary: d.analysis?.transcript_summary,
+      callSuccessful: d.analysis?.call_successful === 'true',
+      durationSeconds: d.call_duration_secs,
+    });
+    return jsonResponse({ ok: true });
+  }),
+});
+
 http.route({
   path: '/getToken',
   method: 'POST',
