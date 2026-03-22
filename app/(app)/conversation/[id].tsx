@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
@@ -29,6 +30,7 @@ function formatTime(ts: number): string {
 export default function ConversationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
+  const [activeTab, setActiveTab] = useState<"transcript" | "intel">("transcript");
   const conv = useQuery(api.conversations.getConversation, {
     conversationId: id as Id<"conversations">,
   });
@@ -60,56 +62,81 @@ export default function ConversationDetailScreen() {
           <Text style={styles.muted}>Conversation not found.</Text>
         </View>
       ) : (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Transcript */}
-          {conv.messages.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Transcript</Text>
-              <View style={styles.bubbles}>
-                {(conv.messages as Message[]).map((msg, i) => {
-                  const isUser = msg.role === "user";
-                  return (
-                    <View key={i} style={[styles.row, isUser ? styles.rowUser : styles.rowAssistant]}>
-                      <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}>
-                        <Text style={[styles.bubbleText, isUser ? styles.textUser : styles.textAssistant]}>
-                          {msg.content}
-                        </Text>
-                        <Text style={[styles.timestamp, isUser ? styles.timestampUser : styles.timestampAssistant]}>
-                          {formatTime(msg.timestamp)}
-                        </Text>
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-          )}
+        <>
+          <View style={styles.tabBar}>
+            <Pressable
+              style={[styles.tab, activeTab === "transcript" && styles.tabActive]}
+              onPress={() => setActiveTab("transcript")}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeTab === "transcript" }}
+            >
+              <Text style={[styles.tabText, activeTab === "transcript" && styles.tabTextActive]}>
+                Transcript
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.tab, activeTab === "intel" && styles.tabActive]}
+              onPress={() => setActiveTab("intel")}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeTab === "intel" }}
+            >
+              <Text style={[styles.tabText, activeTab === "intel" && styles.tabTextActive]}>
+                Intel ({(conv.intelCards as IntelCardType[]).length})
+              </Text>
+            </Pressable>
+          </View>
 
-          {/* Intel Cards */}
-          {(conv.intelCards as IntelCardType[]).length > 0 && (
-            <View style={styles.intelSection}>
-              <View style={styles.intelAccent} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.intelSectionTitle}>
-                  {(conv.intelCards as IntelCardType[]).length} {(conv.intelCards as IntelCardType[]).length === 1 ? "finding" : "findings"}
-                </Text>
-                {(conv.intelCards as IntelCardType[]).map((card) => (
-                  <IntelCard key={card.id} card={card} />
-                ))}
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {activeTab === "transcript" ? (
+              conv.messages.length > 0 ? (
+                <View style={styles.section}>
+                  <View style={styles.bubbles}>
+                    {(conv.messages as Message[]).map((msg, i) => {
+                      const isUser = msg.role === "user";
+                      return (
+                        <View key={i} style={[styles.row, isUser ? styles.rowUser : styles.rowAssistant]}>
+                          <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}>
+                            <Text style={[styles.bubbleText, isUser ? styles.textUser : styles.textAssistant]}>
+                              {msg.content}
+                            </Text>
+                            <Text style={[styles.timestamp, isUser ? styles.timestampUser : styles.timestampAssistant]}>
+                              {formatTime(msg.timestamp)}
+                            </Text>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.center}>
+                  <Text style={styles.muted}>No messages yet</Text>
+                </View>
+              )
+            ) : (conv.intelCards as IntelCardType[]).length > 0 ? (
+              <View style={styles.intelSection}>
+                <View style={styles.intelAccent} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.intelSectionTitle}>
+                    {(conv.intelCards as IntelCardType[]).length}{" "}
+                    {(conv.intelCards as IntelCardType[]).length === 1 ? "finding" : "findings"}
+                  </Text>
+                  {(conv.intelCards as IntelCardType[]).map((card) => (
+                    <IntelCard key={card.id} card={card} />
+                  ))}
+                </View>
               </View>
-            </View>
-          )}
-
-          {conv.messages.length === 0 && conv.intelCards.length === 0 && (
-            <View style={styles.center}>
-              <Text style={styles.muted}>This conversation has no saved content.</Text>
-            </View>
-          )}
-        </ScrollView>
+            ) : (
+              <View style={styles.center}>
+                <Text style={styles.muted}>No intel cards found</Text>
+              </View>
+            )}
+          </ScrollView>
+        </>
       )}
     </SafeAreaView>
   );
@@ -154,6 +181,31 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.mutedForeground as string,
   },
+  tabBar: {
+    flexDirection: "row",
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+    gap: Spacing.xs,
+  },
+  tab: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.secondarySystemFill as string,
+  },
+  tabActive: {
+    backgroundColor: Colors.primary as string,
+  },
+  tabText: {
+    fontSize: FontSize.sm,
+    fontWeight: "600",
+    color: Colors.mutedForeground as string,
+  },
+  tabTextActive: {
+    color: Colors.onColor,
+  },
   center: {
     flex: 1,
     alignItems: "center",
@@ -172,15 +224,6 @@ const styles = StyleSheet.create({
   },
   section: {
     paddingTop: Spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: FontSize.sm,
-    fontWeight: "600",
-    color: Colors.mutedForeground as string,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.sm,
   },
   intelSection: {
     flexDirection: "row",
