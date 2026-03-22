@@ -173,22 +173,22 @@ export function useCounter() {
     const mode = opts?.mode ?? "research";
     setSessionMode(mode);
     setError(null);
-    pendingContextRef.current = opts?.context ?? null;
+    const modeConfig = MODE_CONFIGS[mode];
+    // Combine mode instructions + any extra context into a single contextual update
+    const contextParts = [modeConfig.systemPrompt];
+    if (opts?.context) contextParts.push(opts.context);
+    pendingContextRef.current = contextParts.join("\n\n");
     const convId = await createConversation({ title: "Conversation" });
     setConversationId(convId);
     convIdRef.current = convId;
     const agentId = process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID;
     if (!agentId) throw new Error("Missing EXPO_PUBLIC_ELEVENLABS_AGENT_ID");
-    const modeConfig = MODE_CONFIGS[mode];
     const firstMsg = opts?.firstMessage ?? modeConfig.firstMessage;
     console.log("[Counter] Connecting in", mode, "mode");
     await conversation.startSession({
       agentId,
       overrides: {
-        agent: {
-          prompt: { prompt: modeConfig.systemPrompt },
-          firstMessage: firstMsg,
-        },
+        agent: { firstMessage: firstMsg },
       },
     });
   }, [conversation, createConversation]);
