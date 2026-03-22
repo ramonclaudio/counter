@@ -8,6 +8,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { router } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -106,7 +107,14 @@ function Orb({ isSpeaking, isConnected, isSearching }: { isSpeaking: boolean; is
   );
 }
 
-function FeedEmptyHint() {
+const SUGGESTIONS = [
+  "Looking for a laptop",
+  "Car shopping",
+  "Negotiating rent",
+  "Best phone deals",
+];
+
+function FeedEmptyState({ onSuggestion }: { onSuggestion?: (text: string) => void }) {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(8);
 
@@ -125,6 +133,19 @@ function FeedEmptyHint() {
       <Text style={styles.emptyHint}>
         Tell me what you're buying. I'll find everything you need to know.
       </Text>
+      <View style={styles.suggestionsRow}>
+        {SUGGESTIONS.map((s) => (
+          <Pressable
+            key={s}
+            style={styles.suggestionChip}
+            onPress={() => onSuggestion?.(s)}
+            accessibilityRole="button"
+            accessibilityLabel={s}
+          >
+            <Text style={styles.suggestionText}>{s}</Text>
+          </Pressable>
+        ))}
+      </View>
     </Animated.View>
   );
 }
@@ -241,6 +262,7 @@ export default function ConversationScreen() {
                 <IconSymbol name="mic.fill" size={IconSize["2xl"]} color={Colors.onColor} />
                 <Text style={styles.startLabel}>New Session</Text>
               </Pressable>
+              <Text style={styles.sessionEndFollow}>Try asking about alternatives or price history</Text>
               <Pressable onPress={dismissSession} hitSlop={12} accessibilityRole="button" accessibilityLabel="Dismiss">
                 <Text style={styles.dismissLabel}>Dismiss</Text>
               </Pressable>
@@ -296,6 +318,14 @@ export default function ConversationScreen() {
   // --- Connected: feed layout ---
   return (
     <SafeAreaView style={styles.root}>
+      {/* Ambient gradient backdrop */}
+      <LinearGradient
+        colors={["transparent", "rgba(0,136,255,0.04)", "rgba(0,136,255,0.02)", "transparent"]}
+        locations={[0, 0.35, 0.65, 1]}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
       {/* Header with mini orb */}
       <View style={styles.headerConnected}>
         <Text style={styles.wordmark}>Counter</Text>
@@ -329,7 +359,7 @@ export default function ConversationScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {feedItems.length === 0 && !isSearching && <FeedEmptyHint />}
+        {feedItems.length === 0 && !isSearching && <FeedEmptyState />}
         {feedItems.map((item, i) => (
           <FeedItemView key={i} item={item} />
         ))}
@@ -339,6 +369,17 @@ export default function ConversationScreen() {
       {/* Controls */}
       <View style={styles.controls}>
         <View style={styles.sessionControls}>
+          <Pressable
+            style={styles.iconButton}
+            accessibilityRole="button"
+            accessibilityLabel="Text input (coming soon)"
+          >
+            <IconSymbol
+              name="keyboard"
+              size={IconSize.xl}
+              color={Colors.tertiaryLabel as string}
+            />
+          </Pressable>
           <Pressable
             style={[styles.iconButton, micMuted && styles.iconButtonActive]}
             onPress={handleMicToggle}
@@ -477,6 +518,27 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing["4xl"],
     paddingHorizontal: Spacing["2xl"],
   },
+  suggestionsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: Spacing.sm,
+    paddingTop: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+  },
+  suggestionChip: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.border as string,
+    backgroundColor: Colors.card as string,
+  },
+  suggestionText: {
+    fontSize: FontSize.sm,
+    color: Colors.foreground as string,
+    fontWeight: "500",
+  },
   // --- Controls ---
   controls: {
     paddingHorizontal: Spacing.lg,
@@ -554,6 +616,12 @@ const styles = StyleSheet.create({
   sessionEndSubtitle: {
     fontSize: FontSize.sm,
     color: Colors.mutedForeground as string,
+  },
+  sessionEndFollow: {
+    fontSize: FontSize.sm,
+    color: Colors.tertiaryLabel as string,
+    textAlign: "center",
+    paddingHorizontal: Spacing["2xl"],
   },
   dismissLabel: {
     fontSize: FontSize.base,
