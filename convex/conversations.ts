@@ -69,6 +69,21 @@ export const listConversations = authQuery({
   },
 });
 
+export const updateTitle = authMutation({
+  args: {
+    conversationId: v.id('conversations'),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) throw new Error('Conversation not found');
+    await ctx.db.patch(args.conversationId, {
+      title: args.title,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 export const getConversation = authQuery({
   args: {
     conversationId: v.id('conversations'),
