@@ -18,6 +18,8 @@ export type IntelCard = {
 
 export type ConversationPhase = 'idle' | 'research' | 'coach' | 'advisor';
 
+export type SessionMode = 'research' | 'practice' | 'live';
+
 export type Message = {
   role: 'user' | 'assistant';
   content: string;

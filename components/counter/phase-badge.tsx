@@ -1,12 +1,19 @@
 import { useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors, Radius, PhaseColors } from "@/constants/theme";
 import { Spacing, FontSize, IconSize } from "@/constants/layout";
 import { Spring } from "@/constants/motion";
-import type { ConversationPhase } from "@/lib/types";
+import type { ConversationPhase, SessionMode } from "@/lib/types";
 
 const PHASE_CONFIG: Record<
   ConversationPhase,
@@ -34,19 +41,46 @@ const PHASE_CONFIG: Record<
   },
 };
 
+const LIVE_RED = "#EF4444";
+const PRACTICE_PURPLE = "#8B5CF6";
+
 type Props = {
   phase: ConversationPhase;
+  mode?: SessionMode;
 };
 
-export function PhaseBadge({ phase }: Props) {
+function LiveDot() {
+  const pulseScale = useSharedValue(1);
+
+  useEffect(() => {
+    pulseScale.value = withRepeat(
+      withSequence(
+        withTiming(1.3, { duration: 600 }),
+        withTiming(1, { duration: 600 }),
+      ),
+      -1,
+    );
+  }, []);
+
+  const dotStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+  }));
+
+  return <Animated.View style={[styles.dot, dotStyle]} />;
+}
+
+export function PhaseBadge({ phase, mode }: Props) {
   const config = PHASE_CONFIG[phase];
   const scale = useSharedValue(1);
+  const isLive = mode === "live";
+  const isPractice = mode === "practice";
+  const borderColor = isLive ? LIVE_RED : config.color;
 
   useEffect(() => {
     scale.value = withSpring(1.08, Spring.snappy, () => {
       scale.value = withSpring(1, Spring.snappy);
     });
-  }, [phase]);
+  }, [phase, mode]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -54,7 +88,20 @@ export function PhaseBadge({ phase }: Props) {
 
   return (
     <Animated.View style={animatedStyle} accessibilityLiveRegion="polite">
-      <View style={[styles.badge, { borderColor: config.color }]}>
+      <View style={[styles.badge, { borderColor }]}>
+        {isLive && (
+          <>
+            <LiveDot />
+            <Text style={[styles.label, { color: LIVE_RED }]}>LIVE</Text>
+            <View style={styles.separator} />
+          </>
+        )}
+        {isPractice && (
+          <>
+            <Text style={[styles.label, { color: PRACTICE_PURPLE }]}>Practice</Text>
+            <View style={styles.separator} />
+          </>
+        )}
         <IconSymbol name={config.icon} size={IconSize.sm} color={config.color} />
         <Text style={[styles.label, { color: config.color }]}>{config.label}</Text>
       </View>
@@ -76,5 +123,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: FontSize.sm,
     fontWeight: "600",
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: LIVE_RED,
+  },
+  separator: {
+    width: 1,
+    height: 12,
+    backgroundColor: Colors.mutedForeground as string,
+    opacity: 0.3,
   },
 });

@@ -37,7 +37,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors, Radius, AnimationColors, PhaseColors, PhaseGradients, Overlay } from "@/constants/theme";
 import { Spacing, FontSize, TouchTarget, IconSize } from "@/constants/layout";
 import { haptics } from "@/lib/haptics";
-import type { ConversationPhase, IntelCard, FeedItem } from "@/lib/types";
+import { MODE_CONFIGS } from "@/constants/modes";
+import type { ConversationPhase, IntelCard, FeedItem, SessionMode } from "@/lib/types";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -255,8 +256,8 @@ function FeedEmptyState({ onSuggestion }: { onSuggestion?: (text: string) => voi
   );
 }
 
-function ImmersiveVoiceOverlay({ isSpeaking, isSearching, phase, micMuted, onMicToggle, onEnd, onDismiss }: {
-  isSpeaking: boolean; isSearching: boolean; phase: ConversationPhase;
+function ImmersiveVoiceOverlay({ isSpeaking, isSearching, phase, mode, micMuted, onMicToggle, onEnd, onDismiss }: {
+  isSpeaking: boolean; isSearching: boolean; phase: ConversationPhase; mode: SessionMode;
   micMuted: boolean; onMicToggle: () => void; onEnd: () => void; onDismiss: () => void;
 }) {
   const gradient = getPhaseGradient(phase);
@@ -277,8 +278,9 @@ function ImmersiveVoiceOverlay({ isSpeaking, isSearching, phase, micMuted, onMic
       <View style={styles.immersiveCenter}>
         <Orb isSpeaking={isSpeaking} isConnected isSearching={isSearching} phase={phase} size="immersive" />
         <Text style={styles.immersivePhase}>
-          {phase === "research" ? "Researching" : phase === "coach" ? "Coaching" : phase === "advisor" ? "Advising" : "Listening"}
+          {mode === "live" ? "LIVE" : mode === "practice" ? "Practice" : phase === "research" ? "Researching" : phase === "coach" ? "Coaching" : phase === "advisor" ? "Advising" : "Listening"}
         </Text>
+        {mode === "live" && <Text style={styles.immersiveLiveHint}>Listening to your negotiation</Text>}
       </View>
       <View style={styles.immersiveControls}>
         <Pressable
@@ -395,10 +397,11 @@ function PostSessionSummary({ feed, onNewSession, onDismiss, onFollowUp }: {
 // --- Main Screen ---
 
 export default function ConversationScreen() {
-  const { startSession, endSession, toggleMicMuted, sendTextMessage, status, isSpeaking, conversationPhase, isSearching, error, feedItems } =
+  const { startSession, endSession, toggleMicMuted, sendTextMessage, status, isSpeaking, conversationPhase, isSearching, error, feedItems, sessionMode } =
     useCounter();
   const [micMuted, setMicMutedState] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<SessionMode>("research");
   const [lastSessionFeed, setLastSessionFeed] = useState<typeof feedItems>([]);
   const [immersiveMode, setImmersiveMode] = useState(false);
   const [textInput, setTextInput] = useState("");
@@ -443,12 +446,12 @@ export default function ConversationScreen() {
     if (hasIntel && immersiveMode) setImmersiveMode(false);
   }, [feedItems]);
 
-  const handleStart = async (opts?: { context?: string; firstMessage?: string }) => {
+  const handleStart = async (opts?: { context?: string; firstMessage?: string; mode?: SessionMode }) => {
     setIsStarting(true);
     setImmersiveMode(false);
     setShowTextInput(false);
     try {
-      await startSession(opts);
+      await startSession({ ...opts, mode: opts?.mode ?? selectedMode });
     } catch (e) {
       console.error("[Counter] Start failed:", e);
     } finally {
@@ -527,26 +530,49 @@ export default function ConversationScreen() {
           </Pressable>
         </View>
         <ScrollView contentContainerStyle={styles.homeContent} showsVerticalScrollIndicator={false}>
-          {/* Orb - alive, not dead gray */}
+          {/* Orb */}
           <View style={styles.homeOrbWrap}>
             <Orb isSpeaking={false} isConnected isSearching={false} />
           </View>
-          {/* Greeting */}
           <Text style={styles.homeGreeting}>{getGreeting()}</Text>
           {error && <Text style={[styles.statusLabel, { color: Colors.systemRed as string }]}>{error}</Text>}
-          {/* Start button - right under the greeting */}
+
+          {/* Mode selector */}
+          <View style={styles.modeSelector}>
+            {(["research", "practice", "live"] as SessionMode[]).map((mode) => {
+              const cfg = MODE_CONFIGS[mode];
+              const active = selectedMode === mode;
+              return (
+                <Pressable
+                  key={mode}
+                  style={[styles.modeCard, active && { borderColor: cfg.color, backgroundColor: `${cfg.color}12` }]}
+                  onPress={() => { haptics.light(); setSelectedMode(mode); }}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: active }}
+                >
+                  <IconSymbol name={cfg.icon} size={IconSize["2xl"]} color={active ? cfg.color : (Colors.tertiaryLabel as string)} />
+                  <Text style={[styles.modeLabel, active && { color: cfg.color }]}>{cfg.label}</Text>
+                  <Text style={styles.modeDescription} numberOfLines={2}>{cfg.description}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {/* Start button */}
           <Pressable
-            style={[styles.homeStartButton, isStarting && styles.startButtonDisabled]}
+            style={[styles.homeStartButton, { backgroundColor: MODE_CONFIGS[selectedMode].color, shadowColor: MODE_CONFIGS[selectedMode].color }, isStarting && styles.startButtonDisabled]}
             onPress={() => handleStart()}
             disabled={isStarting}
             accessibilityRole="button"
-            accessibilityLabel="Start conversation"
           >
-            <IconSymbol name="mic.fill" size={IconSize["3xl"]} color={Colors.onColor} />
-            <Text style={styles.homeStartLabel}>{isStarting ? "Connecting..." : "Start Conversation"}</Text>
+            <IconSymbol name={selectedMode === "live" ? "ear.fill" : "mic.fill"} size={IconSize["3xl"]} color={Colors.onColor} />
+            <Text style={styles.homeStartLabel}>{isStarting ? "Connecting..." : MODE_CONFIGS[selectedMode].startLabel}</Text>
           </Pressable>
+
           {/* Categories */}
-          <Text style={styles.homeSectionLabel}>Quick start</Text>
+          <Text style={styles.homeSectionLabel}>
+            {selectedMode === "practice" ? "Practice scenario" : selectedMode === "live" ? "Go live with" : "Quick start"}
+          </Text>
           <View style={styles.homeCategoryGrid}>
             {CATEGORIES.map((cat) => (
               <Pressable
@@ -556,11 +582,12 @@ export default function ConversationScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={cat.label}
               >
-                <IconSymbol name={cat.icon} size={IconSize["2xl"]} color={Colors.primary as string} />
+                <IconSymbol name={cat.icon} size={IconSize["2xl"]} color={MODE_CONFIGS[selectedMode].color} />
                 <Text style={styles.homeCategoryLabel}>{cat.label}</Text>
               </Pressable>
             ))}
           </View>
+
           {/* Suggestions */}
           <Text style={styles.homeSectionLabel}>Try saying</Text>
           <View style={styles.homeSuggestions}>
@@ -622,7 +649,7 @@ export default function ConversationScreen() {
 
       {/* Phase strip */}
       <View style={styles.phaseStrip}>
-        <PhaseBadge phase={conversationPhase} />
+        <PhaseBadge phase={conversationPhase} mode={sessionMode} />
       </View>
 
       {/* Status bar */}
@@ -710,6 +737,7 @@ export default function ConversationScreen() {
           isSpeaking={isSpeaking}
           isSearching={isSearching}
           phase={conversationPhase}
+          mode={sessionMode}
           micMuted={micMuted}
           onMicToggle={handleMicToggle}
           onEnd={handleEnd}
@@ -786,6 +814,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing["3xl"],
     letterSpacing: -0.5,
     lineHeight: 32,
+  },
+  // --- Mode selector ---
+  modeSelector: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.sm,
+  },
+  modeCard: {
+    flex: 1,
+    alignItems: "center",
+    gap: Spacing.xs,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderColor: Colors.border as string,
+    backgroundColor: Colors.card as string,
+  },
+  modeLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: "700",
+    color: Colors.foreground as string,
+  },
+  modeDescription: {
+    fontSize: FontSize.xs,
+    color: Colors.tertiaryLabel as string,
+    textAlign: "center",
+    lineHeight: 14,
   },
   homeStartButton: {
     flexDirection: "row",
@@ -1191,6 +1249,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: Overlay.onDarkSecondary,
     letterSpacing: 0.5,
+  },
+  immersiveLiveHint: {
+    fontSize: FontSize.sm,
+    color: Overlay.onDarkTertiary,
+    fontWeight: "500",
   },
   immersiveControls: {
     flexDirection: "row",

@@ -7,7 +7,8 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { env } from "@/lib/env";
 import { getConversationToken } from "@/lib/elevenlabs";
 import { haptics } from "@/lib/haptics";
-import type { IntelCard, ConversationPhase, Message, FeedItem } from "@/lib/types";
+import type { IntelCard, ConversationPhase, Message, FeedItem, SessionMode } from "@/lib/types";
+import { MODE_CONFIGS } from "@/constants/modes";
 
 export function useCounter() {
   const [intelCards, setIntelCards] = useState<IntelCard[]>([]);
@@ -17,6 +18,7 @@ export function useCounter() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<Id<"conversations"> | null>(null);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+  const [sessionMode, setSessionMode] = useState<SessionMode>("research");
 
   const createConversation = useMutation(api.conversations.createConversation);
   const addMessage = useMutation(api.conversations.addMessage);
@@ -167,7 +169,9 @@ export function useCounter() {
     },
   });
 
-  const startSession = useCallback(async (opts?: { context?: string; firstMessage?: string }) => {
+  const startSession = useCallback(async (opts?: { context?: string; firstMessage?: string; mode?: SessionMode }) => {
+    const mode = opts?.mode ?? "research";
+    setSessionMode(mode);
     setError(null);
     pendingContextRef.current = opts?.context ?? null;
     const convId = await createConversation({ title: "Conversation" });
@@ -175,10 +179,17 @@ export function useCounter() {
     convIdRef.current = convId;
     const agentId = process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID;
     if (!agentId) throw new Error("Missing EXPO_PUBLIC_ELEVENLABS_AGENT_ID");
-    console.log("[Counter] Connecting to agent:", agentId, opts?.context ? "(with context)" : "");
+    const modeConfig = MODE_CONFIGS[mode];
+    const firstMsg = opts?.firstMessage ?? modeConfig.firstMessage;
+    console.log("[Counter] Connecting in", mode, "mode");
     await conversation.startSession({
       agentId,
-      overrides: opts?.firstMessage ? { agent: { firstMessage: opts.firstMessage } } : undefined,
+      overrides: {
+        agent: {
+          prompt: { prompt: modeConfig.systemPrompt },
+          firstMessage: firstMsg,
+        },
+      },
     });
   }, [conversation, createConversation]);
 
@@ -229,5 +240,6 @@ export function useCounter() {
     messages,
     feedItems,
     conversationId,
+    sessionMode,
   };
 }
