@@ -106,6 +106,29 @@ function Orb({ isSpeaking, isConnected, isSearching }: { isSpeaking: boolean; is
   );
 }
 
+function FeedEmptyHint() {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(8);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 600 });
+    translateY.value = withSpring(0, { damping: 20, stiffness: 180 });
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return (
+    <Animated.View style={style}>
+      <Text style={styles.emptyHint}>
+        Tell me what you're buying. I'll find everything you need to know.
+      </Text>
+    </Animated.View>
+  );
+}
+
 export default function ConversationScreen() {
   const { startSession, endSession, toggleMicMuted, status, isSpeaking, conversationPhase, isSearching, error, feedItems } =
     useCounter();
@@ -118,6 +141,25 @@ export default function ConversationScreen() {
 
   const isConnected = status === "connected";
   const isConnecting = status === "connecting";
+
+  // Session-ended entrance animation
+  const sessionEndOpacity = useSharedValue(0);
+  const sessionEndTranslate = useSharedValue(20);
+
+  useEffect(() => {
+    if (!isConnected && !isConnecting && lastSessionFeed.length > 0) {
+      sessionEndOpacity.value = withTiming(1, { duration: 400 });
+      sessionEndTranslate.value = withSpring(0, { damping: 20, stiffness: 180 });
+    } else {
+      sessionEndOpacity.value = 0;
+      sessionEndTranslate.value = 20;
+    }
+  }, [isConnected, isConnecting, lastSessionFeed.length]);
+
+  const sessionEndStyle = useAnimatedStyle(() => ({
+    opacity: sessionEndOpacity.value,
+    transform: [{ translateY: sessionEndTranslate.value }],
+  }));
 
   useEffect(() => {
     if (feedItems.length > 0) {
@@ -183,24 +225,26 @@ export default function ConversationScreen() {
             </Pressable>
           </View>
           <View style={styles.orbArea}>
-            <View style={styles.sessionEndBanner}>
-              <IconSymbol name="checkmark.circle.fill" size={IconSize["2xl"]} color={Colors.success as string} />
-              <Text style={styles.sessionEndTitle}>Session ended</Text>
-              {sessionSummary && <Text style={styles.sessionEndSubtitle}>{sessionSummary}</Text>}
-              {cardCount > 0 && <Text style={styles.sessionEndSubtitle}>{cardCount} {cardCount === 1 ? 'card' : 'cards'} saved</Text>}
-            </View>
-            <Pressable
-              style={styles.startButton}
-              onPress={() => { dismissSession(); handleStart(); }}
-              accessibilityRole="button"
-              accessibilityLabel="Start new session"
-            >
-              <IconSymbol name="mic.fill" size={IconSize["2xl"]} color={Colors.onColor} />
-              <Text style={styles.startLabel}>New Session</Text>
-            </Pressable>
-            <Pressable onPress={dismissSession} hitSlop={12} accessibilityRole="button" accessibilityLabel="Dismiss">
-              <Text style={styles.dismissLabel}>Dismiss</Text>
-            </Pressable>
+            <Animated.View style={[{ alignItems: "center", gap: Spacing.lg }, sessionEndStyle]}>
+              <View style={styles.sessionEndBanner}>
+                <IconSymbol name="checkmark.circle.fill" size={IconSize["2xl"]} color={Colors.success as string} />
+                <Text style={styles.sessionEndTitle}>Session ended</Text>
+                {sessionSummary && <Text style={styles.sessionEndSubtitle}>{sessionSummary}</Text>}
+                {cardCount > 0 && <Text style={styles.sessionEndSubtitle}>{cardCount} {cardCount === 1 ? 'card' : 'cards'} saved</Text>}
+              </View>
+              <Pressable
+                style={styles.startButton}
+                onPress={() => { dismissSession(); handleStart(); }}
+                accessibilityRole="button"
+                accessibilityLabel="Start new session"
+              >
+                <IconSymbol name="mic.fill" size={IconSize["2xl"]} color={Colors.onColor} />
+                <Text style={styles.startLabel}>New Session</Text>
+              </Pressable>
+              <Pressable onPress={dismissSession} hitSlop={12} accessibilityRole="button" accessibilityLabel="Dismiss">
+                <Text style={styles.dismissLabel}>Dismiss</Text>
+              </Pressable>
+            </Animated.View>
           </View>
         </SafeAreaView>
       );
@@ -259,11 +303,15 @@ export default function ConversationScreen() {
           <MiniOrb isSpeaking={isSpeaking} isConnected={isConnected} isSearching={isSearching} />
         </View>
         <View style={styles.headerRight}>
-          <PhaseBadge phase={conversationPhase} />
           <Pressable onPress={() => router.push("/(app)/history")} hitSlop={12} accessibilityRole="button" accessibilityLabel="View history">
             <IconSymbol name="clock" size={IconSize.xl} color={Colors.mutedForeground as string} />
           </Pressable>
         </View>
+      </View>
+
+      {/* Phase strip */}
+      <View style={styles.phaseStrip}>
+        <PhaseBadge phase={conversationPhase} />
       </View>
 
       {/* Status bar */}
@@ -281,11 +329,7 @@ export default function ConversationScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {feedItems.length === 0 && !isSearching && (
-          <Text style={styles.emptyHint}>
-            Tell me what you're buying. I'll find everything you need to know.
-          </Text>
-        )}
+        {feedItems.length === 0 && !isSearching && <FeedEmptyHint />}
         {feedItems.map((item, i) => (
           <FeedItemView key={i} item={item} />
         ))}
@@ -354,6 +398,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.md,
+  },
+  phaseStrip: {
+    alignItems: "center",
+    paddingVertical: Spacing.xxs,
   },
   wordmark: {
     fontSize: FontSize["2xl"],
