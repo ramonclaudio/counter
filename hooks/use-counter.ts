@@ -27,6 +27,7 @@ export function useCounter() {
   const convIdRef = useRef<Id<"conversations"> | null>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const feedCountRef = useRef(0);
+  const pendingContextRef = useRef<string | null>(null);
 
   useEffect(() => {
     feedCountRef.current = feedItems.length;
@@ -84,6 +85,16 @@ export function useCounter() {
       setMessages([]);
       setFeedItems([]);
       setError(null);
+      // Inject context from previous session if available
+      if (pendingContextRef.current) {
+        const ctx = pendingContextRef.current;
+        pendingContextRef.current = null;
+        // Small delay to ensure WebRTC data channel is ready
+        setTimeout(() => {
+          try { conversation.sendContextualUpdate(ctx); }
+          catch (e) { console.warn('[Counter] Context inject failed:', e); }
+        }, 500);
+      }
     },
     onDisconnect: () => {
       setConversationPhase("idle");
@@ -156,16 +167,15 @@ export function useCounter() {
     },
   });
 
-  const startSession = useCallback(async () => {
+  const startSession = useCallback(async (context?: string) => {
     setError(null);
-    // Create a Convex conversation doc before connecting
+    pendingContextRef.current = context ?? null;
     const convId = await createConversation({ title: "Conversation" });
     setConversationId(convId);
     convIdRef.current = convId;
-    // Use agentId directly (public agent, simpler than token flow)
     const agentId = process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID;
     if (!agentId) throw new Error("Missing EXPO_PUBLIC_ELEVENLABS_AGENT_ID");
-    console.log("[Counter] Connecting to agent:", agentId);
+    console.log("[Counter] Connecting to agent:", agentId, context ? "(with context)" : "");
     await conversation.startSession({ agentId });
   }, [conversation, createConversation]);
 
@@ -180,10 +190,33 @@ export function useCounter() {
     [conversation],
   );
 
+  const sendTextMessage = useCallback(
+    (text: string) => {
+      if (!text.trim()) return;
+      // Send to ElevenLabs agent via WebRTC
+      try { conversation.sendUserMessage(text); }
+      catch (e) { console.warn('[Counter] sendUserMessage failed:', e); }
+      // Add to local state + persist (mirrors onMessage user handling)
+      const msg: Message = { role: "user", content: text, timestamp: Date.now() };
+      setMessages((prev) => [...prev, msg]);
+      setFeedItems((prev) => [...prev, { type: "user-message", message: msg }]);
+      if (convIdRef.current) {
+        addMessage({ conversationId: convIdRef.current, role: "user", content: text })
+          .catch((e) => console.warn('[Counter] Sync failed:', e));
+      }
+      if (feedCountRef.current === 0 && convIdRef.current) {
+        updateTitle({ conversationId: convIdRef.current, title: text.slice(0, 60) })
+          .catch((e) => console.warn('[Counter] Title update failed:', e));
+      }
+    },
+    [conversation, addMessage, updateTitle],
+  );
+
   return {
     startSession,
     endSession,
     toggleMicMuted,
+    sendTextMessage,
     status: conversation.status,
     isSpeaking: conversation.isSpeaking,
     intelCards,

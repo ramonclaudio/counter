@@ -191,6 +191,30 @@ const FOLLOWUP_SUGGESTIONS = [
   "Get price history",
 ];
 
+function buildSessionContext(feed: FeedItem[], followUp: string): string {
+  const stats = getSessionStats(feed);
+  const parts: string[] = [];
+  parts.push(`The user just completed a session. They want to follow up: "${followUp}".`);
+  if (stats.total > 0) {
+    parts.push(`Previous session found ${stats.total} intel cards:`);
+    const allCards: IntelCard[] = [];
+    for (const item of feed) {
+      if (item.type === "intel") allCards.push(...item.cards);
+    }
+    for (const card of allCards.slice(0, 6)) {
+      const price = card.prices?.[0] ? ` at ${card.prices[0]}` : "";
+      parts.push(`- [${card.type}] ${card.title}${price} (source: ${card.source})`);
+    }
+  }
+  const userMsgs = feed
+    .filter((f): f is Extract<FeedItem, { type: "user-message" }> => f.type === "user-message")
+    .map(f => f.message.content);
+  if (userMsgs.length > 0) {
+    parts.push(`User was asking about: ${userMsgs[0]}`);
+  }
+  return parts.join("\n");
+}
+
 // --- Components ---
 
 function CategoryRow({ onSelect }: { onSelect: (query: string) => void }) {
@@ -390,7 +414,7 @@ function PostSessionSummary({ feed, onNewSession, onDismiss, onFollowUp }: {
 // --- Main Screen ---
 
 export default function ConversationScreen() {
-  const { startSession, endSession, toggleMicMuted, status, isSpeaking, conversationPhase, isSearching, error, feedItems } =
+  const { startSession, endSession, toggleMicMuted, sendTextMessage, status, isSpeaking, conversationPhase, isSearching, error, feedItems } =
     useCounter();
   const [micMuted, setMicMutedState] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
@@ -438,12 +462,12 @@ export default function ConversationScreen() {
     if (hasIntel && immersiveMode) setImmersiveMode(false);
   }, [feedItems]);
 
-  const handleStart = async () => {
+  const handleStart = async (context?: string) => {
     setIsStarting(true);
     setImmersiveMode(false);
     setShowTextInput(false);
     try {
-      await startSession();
+      await startSession(context);
     } catch (e) {
       console.error("[Counter] Start failed:", e);
     } finally {
@@ -472,8 +496,7 @@ export default function ConversationScreen() {
 
   const handleTextSend = () => {
     if (!textInput.trim()) return;
-    // Text input is visual-only for now since ElevenLabs is voice-only
-    // but we show it in the feed as a user message
+    sendTextMessage(textInput.trim());
     haptics.light();
     setTextInput("");
     Keyboard.dismiss();
@@ -500,7 +523,7 @@ export default function ConversationScreen() {
             feed={lastSessionFeed}
             onNewSession={() => { dismissSession(); handleStart(); }}
             onDismiss={dismissSession}
-            onFollowUp={(q) => { dismissSession(); handleStart(); }}
+            onFollowUp={(q) => { const ctx = buildSessionContext(lastSessionFeed, q); dismissSession(); handleStart(ctx); }}
           />
         </SafeAreaView>
       );
@@ -519,12 +542,12 @@ export default function ConversationScreen() {
           <Orb isSpeaking={false} isConnected={false} isSearching={false} />
           <Text style={styles.tagline}>{getGreeting()}</Text>
           {error && <Text style={[styles.statusLabel, { color: Colors.systemRed as string }]}>{error}</Text>}
-          <CategoryRow onSelect={() => handleStart()} />
+          <CategoryRow onSelect={(query) => handleStart(query)} />
         </View>
         <View style={styles.controls}>
           <Pressable
             style={[styles.startButton, isStarting && styles.startButtonDisabled]}
-            onPress={handleStart}
+            onPress={() => handleStart()}
             disabled={isStarting}
             accessibilityRole="button"
             accessibilityLabel="Start conversation"
