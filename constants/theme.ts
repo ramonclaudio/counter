@@ -132,40 +132,81 @@ export const Radius = {
   full: 9999,
 };
 
+// Phase base colors — single source of truth for orb, badge, gradient, mini-orb
+// Character-first: coach is low-chroma calm, research/advisor are vivid
+export const PhaseColors = {
+  idle:     Colors.primary as string,
+  research: '#D9960F', // warm amber — high chroma, medium lightness
+  coach:    '#A692CA', // muted lavender — low chroma, high lightness (calm)
+  advisor:  '#0EA878', // deep emerald — high chroma, lower lightness (decisive)
+} as const;
+
 export const AnimationColors = {
-  speaking: ['#0088FF', '#0099FF', '#00AAFF', '#0077EE', '#0055DD'] as const,
+  // OKLCH-informed: constant perceived lightness across each cycle
+  // Speaking (default): L≈0.62, C≈0.18, H≈250-265
+  speaking: ['#0088FF', '#0091F0', '#009AE8', '#007AEE', '#006BE0'] as const,
+  // Research: L≈0.74, C≈0.16, H≈75-90
+  research: ['#E6A220', '#EDB02C', '#E6A220', '#D8961C', '#CF8E18'] as const,
+  // Coach: L≈0.78, C≈0.08, H≈290-300
+  coach: ['#B8A4D8', '#C2B0E0', '#B8A4D8', '#AE9AD0', '#A692CA'] as const,
+  // Advisor: L≈0.65, C≈0.15, H≈165-175
+  advisor: ['#0EA878', '#18B884', '#0EA878', '#0A976C', '#088D64'] as const,
   search: '#F59E0B' as const,
   searchLight: '#FCD34D' as const,
-  searchFill: 'rgba(245, 158, 11, 0.12)' as const,
-  searchBorder: 'rgba(245, 158, 11, 0.25)' as const,
+  searchFill: 'rgba(245,158,11,0.12)' as const,
+  searchBorder: 'rgba(245,158,11,0.25)' as const,
+  // Savings glow — desaturated for OLED/LCD consistency
+  savingsGlow: '#2DB550' as const,
+} as const;
+
+// Immersive overlay colors
+export const Overlay = {
+  dark: 'rgba(0,0,0,0.85)' as const,
+  darker: 'rgba(0,0,0,0.92)' as const,
+  onDark: '#FFFFFF' as const,
+  onDarkSecondary: 'rgba(255,255,255,0.7)' as const,
+  onDarkTertiary: 'rgba(255,255,255,0.6)' as const,
+  onDarkQuaternary: 'rgba(255,255,255,0.5)' as const,
+  onDarkFill: 'rgba(255,255,255,0.1)' as const,
+  destructiveFill: 'rgba(255,59,48,0.3)' as const,
+} as const;
+
+// Phase-tinted gradients for ambient backgrounds
+export const PhaseGradients: Record<string, [string, string, string, string]> = {
+  idle:     ['transparent', 'rgba(0,136,255,0.04)', 'rgba(0,136,255,0.02)', 'transparent'],
+  research: ['transparent', 'rgba(217,150,15,0.06)', 'rgba(217,150,15,0.03)', 'transparent'],
+  coach:    ['transparent', 'rgba(166,146,202,0.04)', 'rgba(166,146,202,0.02)', 'transparent'],
+  advisor:  ['transparent', 'rgba(14,168,120,0.07)', 'rgba(14,168,120,0.04)', 'transparent'],
 } as const;
 
 export const CardTypeColors = {
+  // Card backgrounds bumped to 2x opacity for grayscale readability
+  // Each type has distinct perceived lightness so cards differentiate without color vision
   price: {
     color: Colors.systemGreen,
-    bg: DynamicColorIOS({ light: 'rgba(52,199,89,0.08)', dark: 'rgba(48,209,88,0.10)' }),
-    border: DynamicColorIOS({ light: 'rgba(52,199,89,0.18)', dark: 'rgba(48,209,88,0.22)' }),
+    bg: DynamicColorIOS({ light: 'rgba(52,199,89,0.12)', dark: 'rgba(48,209,88,0.14)' }),
+    border: DynamicColorIOS({ light: 'rgba(52,199,89,0.25)', dark: 'rgba(48,209,88,0.30)' }),
     label: 'Price Intel',
     icon: 'tag.fill',
   },
   warning: {
     color: Colors.systemRed,
-    bg: DynamicColorIOS({ light: 'rgba(255,59,48,0.06)', dark: 'rgba(255,69,58,0.08)' }),
-    border: DynamicColorIOS({ light: 'rgba(255,59,48,0.15)', dark: 'rgba(255,69,58,0.18)' }),
+    bg: DynamicColorIOS({ light: 'rgba(255,59,48,0.10)', dark: 'rgba(255,69,58,0.12)' }),
+    border: DynamicColorIOS({ light: 'rgba(255,59,48,0.22)', dark: 'rgba(255,69,58,0.26)' }),
     label: 'Alert',
     icon: 'exclamationmark.triangle.fill',
   },
   alternative: {
-    color: Colors.systemBlue,
-    bg: DynamicColorIOS({ light: 'rgba(0,122,255,0.06)', dark: 'rgba(10,132,255,0.08)' }),
-    border: DynamicColorIOS({ light: 'rgba(0,122,255,0.15)', dark: 'rgba(10,132,255,0.18)' }),
+    color: Colors.systemTeal,
+    bg: DynamicColorIOS({ light: 'rgba(48,176,199,0.10)', dark: 'rgba(64,200,224,0.12)' }),
+    border: DynamicColorIOS({ light: 'rgba(48,176,199,0.22)', dark: 'rgba(64,200,224,0.26)' }),
     label: 'Alternative',
     icon: 'arrow.triangle.branch',
   },
   leverage: {
     color: Colors.systemOrange,
-    bg: DynamicColorIOS({ light: 'rgba(255,149,0,0.06)', dark: 'rgba(255,159,10,0.08)' }),
-    border: DynamicColorIOS({ light: 'rgba(255,149,0,0.15)', dark: 'rgba(255,159,10,0.18)' }),
+    bg: DynamicColorIOS({ light: 'rgba(255,149,0,0.10)', dark: 'rgba(255,159,10,0.12)' }),
+    border: DynamicColorIOS({ light: 'rgba(255,149,0,0.22)', dark: 'rgba(255,159,10,0.26)' }),
     label: 'Leverage',
     icon: 'flame.fill',
   },
