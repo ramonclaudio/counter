@@ -28,6 +28,7 @@ export default function AppLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="welcome" options={{ headerShown: false, animation: "fade" }} />
         <Stack.Screen name="settings" options={{ headerShown: false, animation: "fade_from_bottom" }} />
         <Stack.Screen name="history" options={{ headerShown: false, animation: "fade_from_bottom" }} />
         <Stack.Screen name="conversation/[id]" options={{ headerShown: false }} />
