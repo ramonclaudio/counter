@@ -88,10 +88,31 @@ export default function ConversationDetailScreen() {
           </View>
 
           {/* AI-generated summary from ElevenLabs post-call webhook */}
+          {/* AI-generated summary */}
           {conv.summary && (
             <View style={styles.summaryBanner}>
               <IconSymbol name="sparkles" size={IconSize.lg} color={AnimationColors.search} />
-              <Text style={styles.summaryText}>{conv.summary}</Text>
+              <View style={{ flex: 1, gap: Spacing.xs }}>
+                <Text style={styles.summaryText}>{conv.summary}</Text>
+                {conv.durationSeconds != null && (
+                  <Text style={styles.summaryMeta}>
+                    {Math.floor(conv.durationSeconds / 60)}m {conv.durationSeconds % 60}s
+                    {conv.sessionMode ? ` · ${conv.sessionMode}` : ""}
+                    {conv.callSuccessful != null ? (conv.callSuccessful ? " · Goal met" : " · Goal not met") : ""}
+                  </Text>
+                )}
+              </View>
+            </View>
+          )}
+          {/* Collected data from post-call analysis */}
+          {conv.collectedData && Object.keys(conv.collectedData as Record<string, unknown>).length > 0 && (
+            <View style={styles.collectedDataRow}>
+              {Object.entries(conv.collectedData as Record<string, { value: unknown }>).map(([key, item]) => (
+                <View key={key} style={styles.collectedDataChip}>
+                  <Text style={styles.collectedDataLabel}>{key.replace(/_/g, " ")}</Text>
+                  <Text style={styles.collectedDataValue}>{String(item.value)}</Text>
+                </View>
+              ))}
             </View>
           )}
 
@@ -227,10 +248,37 @@ const styles = StyleSheet.create({
     borderColor: AnimationColors.searchBorder,
   },
   summaryText: {
-    flex: 1,
     fontSize: FontSize.sm,
     color: Colors.foreground as string,
     lineHeight: LineHeight.relaxed,
+  },
+  summaryMeta: {
+    fontSize: FontSize.xs,
+    color: Colors.tertiaryLabel as string,
+  },
+  collectedDataRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.sm,
+  },
+  collectedDataChip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    backgroundColor: Colors.secondarySystemFill as string,
+    borderRadius: Radius.md,
+    gap: 2,
+  },
+  collectedDataLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.tertiaryLabel as string,
+    textTransform: "capitalize",
+  },
+  collectedDataValue: {
+    fontSize: FontSize.base,
+    fontWeight: "600",
+    color: Colors.foreground as string,
   },
   center: {
     flex: 1,

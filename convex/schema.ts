@@ -41,6 +41,9 @@ export default defineSchema({
     durationSeconds: v.optional(v.number()),
     elevenlabsConversationId: v.optional(v.string()),
     sessionMode: v.optional(v.string()),
+    // Post-call analysis from ElevenLabs
+    evaluationResults: v.optional(v.any()),
+    collectedData: v.optional(v.any()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

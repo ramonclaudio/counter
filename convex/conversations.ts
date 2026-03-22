@@ -124,6 +124,8 @@ export const saveWebhookSummary = internalMutation({
     summary: v.optional(v.string()),
     callSuccessful: v.optional(v.boolean()),
     durationSeconds: v.optional(v.number()),
+    evaluationResults: v.optional(v.any()),
+    collectedData: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
     const conv = await ctx.db
@@ -135,6 +137,8 @@ export const saveWebhookSummary = internalMutation({
       summary: args.summary,
       callSuccessful: args.callSuccessful,
       durationSeconds: args.durationSeconds,
+      evaluationResults: args.evaluationResults,
+      collectedData: args.collectedData,
       updatedAt: Date.now(),
     });
   },

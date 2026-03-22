@@ -164,6 +164,8 @@ http.route({
         analysis?: {
           call_successful?: string;
           transcript_summary?: string;
+          evaluation_criteria_results?: Record<string, { result: string; rationale: string }>;
+          data_collection_results?: Record<string, { value: unknown; rationale: string }>;
         };
       };
     };
@@ -176,6 +178,8 @@ http.route({
       summary: d.analysis?.transcript_summary,
       callSuccessful: d.analysis?.call_successful === 'true',
       durationSeconds: d.call_duration_secs,
+      evaluationResults: d.analysis?.evaluation_criteria_results,
+      collectedData: d.analysis?.data_collection_results,
     });
     return jsonResponse({ ok: true });
   }),
