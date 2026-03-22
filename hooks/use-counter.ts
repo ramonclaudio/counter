@@ -30,6 +30,8 @@ export function useCounter() {
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const feedCountRef = useRef(0);
   const pendingContextRef = useRef<string | null>(null);
+  const keepaliveRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const sessionModeRef = useRef<SessionMode>("research");
 
   useEffect(() => {
     feedCountRef.current = feedItems.length;
@@ -101,11 +103,21 @@ export function useCounter() {
           }
         }, 1500);
       }
+      // Keepalive for live mode: send user activity every 25s to prevent turn timeout
+      // In live mode, the user may be silent while the salesman is talking
+      clearInterval(keepaliveRef.current);
+      if (sessionModeRef.current === "live") {
+        keepaliveRef.current = setInterval(() => {
+          try { conversation.sendUserActivity(); }
+          catch { /* session may have ended */ }
+        }, 25000);
+      }
     },
     onDisconnect: () => {
       setConversationPhase("idle");
       clearSearchTimeout();
       setIsSearching(false);
+      clearInterval(keepaliveRef.current);
     },
     onError: (message) => {
       console.error("[Counter] Error:", message);
@@ -115,6 +127,21 @@ export function useCounter() {
     },
     onMessage: (message) => {
       if (__DEV__) console.log("[Counter] onMessage:", JSON.stringify(message));
+      // Handle interrupted response corrections: update the last assistant message in feed
+      const msgType = (message as any).type;
+      if (msgType === "agent_response_correction" && typeof message.message === "string") {
+        setFeedItems((prev) => {
+          const items = [...prev];
+          for (let i = items.length - 1; i >= 0; i--) {
+            if (items[i].type === "assistant-message") {
+              items[i] = { type: "assistant-message", message: { role: "assistant", content: message.message as string, timestamp: Date.now() } };
+              break;
+            }
+          }
+          return items;
+        });
+        return;
+      }
       const role = (message as any).role ?? message.source;
       if ((role === "ai" || role === "assistant" || role === "agent") && typeof message.message === "string") {
         const lower = message.message.toLowerCase();
@@ -176,6 +203,7 @@ export function useCounter() {
   const startSession = useCallback(async (opts?: { context?: string; firstMessage?: string; mode?: SessionMode }) => {
     const mode = opts?.mode ?? "research";
     setSessionMode(mode);
+    sessionModeRef.current = mode;
     setError(null);
     const modeConfig = MODE_CONFIGS[mode];
     // Send mode instructions + context via contextual update after connect (no overrides)
