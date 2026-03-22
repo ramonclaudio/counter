@@ -61,7 +61,7 @@ export default function SignInScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <View style={styles.header}>
-          <ThemedText variant="title">Welcome back</ThemedText>
+          <ThemedText variant="title">Welcome back to Counter</ThemedText>
           <ThemedText style={styles.subtitle} color={colors.mutedForeground}>
             Sign in to your account
           </ThemedText>

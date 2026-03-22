@@ -97,7 +97,7 @@ export default function SignUpScreen() {
         <View style={styles.header}>
           <ThemedText variant="title">Create account</ThemedText>
           <ThemedText style={styles.subtitle} color={colors.mutedForeground}>
-            Sign up to get started
+            Start finding better deals
           </ThemedText>
         </View>
 
