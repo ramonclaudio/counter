@@ -19,6 +19,7 @@ import Animated, {
 import { useEffect } from "react";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { haptics } from "@/lib/haptics";
 import { Colors, Radius, Scrim, OnImage, CardTypeColors } from "@/constants/theme";
 import { Spacing, FontSize, LineHeight, IconSize } from "@/constants/layout";
 import { relativeTime } from "@/lib/time";
@@ -31,6 +32,20 @@ if (Platform.OS === "android") {
 const PLACEHOLDER_BLURHASH = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
 
 const TYPE_CONFIG = CardTypeColors;
+
+function parseSavings(prices: string[]): { savings: number; label: string } | null {
+  if (!prices || prices.length < 2) return null;
+  const nums = prices
+    .map((p) => parseFloat(p.replace(/[^0-9.]/g, "")))
+    .filter((n) => !isNaN(n) && n > 0);
+  if (nums.length < 2) return null;
+  const max = Math.max(...nums);
+  const min = Math.min(...nums);
+  if (max === min) return null;
+  const pct = Math.round(((max - min) / max) * 100);
+  if (pct < 5 || pct > 90) return null;
+  return { savings: pct, label: `Save ${pct}%` };
+}
 
 type Props = { card: IntelCardType };
 
@@ -56,6 +71,7 @@ export function IntelCard({ card }: Props) {
   };
 
   const handleToggle = () => {
+    haptics.light();
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded((prev) => !prev);
   };
@@ -68,6 +84,7 @@ export function IntelCard({ card }: Props) {
   const hasDate = !!card.date;
   const isExpandable = hasFullValue || hasHighlights;
   const displayPrices = expanded ? card.prices?.slice(0, 6) : card.prices?.slice(0, 4);
+  const savings = parseSavings(card.prices ?? []);
 
   return (
     <Animated.View style={animatedStyle}>
@@ -145,6 +162,13 @@ export function IntelCard({ card }: Props) {
                     <Text style={styles.priceText}>{price}</Text>
                   </View>
                 ))}
+              </View>
+            )}
+
+            {savings && (
+              <View style={styles.savingsBadge}>
+                <IconSymbol name="arrow.down.circle.fill" size={12} color={Colors.systemGreen as string} />
+                <Text style={styles.savingsText}>{savings.label}</Text>
               </View>
             )}
 
@@ -315,6 +339,18 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: Colors.systemGreen as string,
     fontVariant: ["tabular-nums"],
+  },
+  // Savings badge
+  savingsBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+  },
+  savingsText: {
+    fontSize: FontSize.sm,
+    fontWeight: "700",
+    color: Colors.systemGreen as string,
   },
   // Value
   value: {
