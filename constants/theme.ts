@@ -103,6 +103,7 @@ export const Colors = {
   destructiveBackground: DynamicColorIOS({ light: 'rgba(255,59,48,0.10)',  dark: 'rgba(255,69,58,0.15)' }),
 
   successFill:       DynamicColorIOS({ light: 'rgba(52,199,89,0.15)',   dark: 'rgba(48,209,88,0.18)' }),
+  successBorder:     DynamicColorIOS({ light: 'rgba(52,199,89,0.25)',   dark: 'rgba(48,209,88,0.30)' }),
   successBackground: DynamicColorIOS({ light: 'rgba(52,199,89,0.10)',   dark: 'rgba(48,209,88,0.15)' }),
 
   goldFill:       DynamicColorIOS({ light: 'rgba(255,204,0,0.15)',  dark: 'rgba(255,214,10,0.18)' }),
@@ -130,6 +131,45 @@ export const Radius = {
   '3xl': 26,
   full: 9999,
 };
+
+export const AnimationColors = {
+  speaking: ['#0088FF', '#0099FF', '#00AAFF', '#0077EE', '#0055DD'] as const,
+  search: '#F59E0B' as const,
+  searchLight: '#FCD34D' as const,
+  searchFill: 'rgba(245, 158, 11, 0.12)' as const,
+  searchBorder: 'rgba(245, 158, 11, 0.25)' as const,
+} as const;
+
+export const CardTypeColors = {
+  price: {
+    color: Colors.systemGreen,
+    bg: DynamicColorIOS({ light: 'rgba(52,199,89,0.08)', dark: 'rgba(48,209,88,0.10)' }),
+    border: DynamicColorIOS({ light: 'rgba(52,199,89,0.18)', dark: 'rgba(48,209,88,0.22)' }),
+    label: 'Price Intel',
+    icon: 'tag.fill',
+  },
+  warning: {
+    color: Colors.systemRed,
+    bg: DynamicColorIOS({ light: 'rgba(255,59,48,0.06)', dark: 'rgba(255,69,58,0.08)' }),
+    border: DynamicColorIOS({ light: 'rgba(255,59,48,0.15)', dark: 'rgba(255,69,58,0.18)' }),
+    label: 'Alert',
+    icon: 'exclamationmark.triangle.fill',
+  },
+  alternative: {
+    color: Colors.systemBlue,
+    bg: DynamicColorIOS({ light: 'rgba(0,122,255,0.06)', dark: 'rgba(10,132,255,0.08)' }),
+    border: DynamicColorIOS({ light: 'rgba(0,122,255,0.15)', dark: 'rgba(10,132,255,0.18)' }),
+    label: 'Alternative',
+    icon: 'arrow.triangle.branch',
+  },
+  leverage: {
+    color: Colors.systemOrange,
+    bg: DynamicColorIOS({ light: 'rgba(255,149,0,0.06)', dark: 'rgba(255,159,10,0.08)' }),
+    border: DynamicColorIOS({ light: 'rgba(255,149,0,0.15)', dark: 'rgba(255,159,10,0.18)' }),
+    label: 'Leverage',
+    icon: 'flame.fill',
+  },
+} as const;
 
 export const Typography = {
   default: { fontSize: 16, lineHeight: 24 },
