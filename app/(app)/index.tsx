@@ -274,6 +274,7 @@ export default function ConversationScreen() {
               <Pressable onPress={() => { haptics.light(); dismissSession(); }} hitSlop={12} accessibilityRole="button" accessibilityLabel="Dismiss">
                 <Text style={styles.dismissLabel}>Dismiss</Text>
               </Pressable>
+              <Text style={styles.disclaimer}>Prices may vary. Always verify before purchasing.</Text>
             </Animated.View>
           </View>
         </SafeAreaView>
@@ -636,5 +637,11 @@ const styles = StyleSheet.create({
     fontSize: FontSize.base,
     color: Colors.mutedForeground as string,
     paddingVertical: Spacing.md,
+  },
+  disclaimer: {
+    fontSize: FontSize.xs,
+    color: Colors.quaternaryLabel as string,
+    textAlign: "center",
+    paddingTop: Spacing.lg,
   },
 });
