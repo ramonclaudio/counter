@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import { router } from "expo-router";
 import { api } from "@/convex/_generated/api";
 import { useColors } from "@/hooks/use-theme";
+import { Skeleton } from "@/components/ui/skeleton";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors, Radius } from "@/constants/theme";
 import { Spacing, FontSize, LineHeight, IconSize } from "@/constants/layout";
@@ -36,12 +37,22 @@ export default function HistoryScreen() {
       </View>
 
       {conversations === undefined ? (
-        <View style={styles.center}>
-          <Text style={styles.muted}>Loading...</Text>
+        <View style={styles.skeletonList}>
+          {[1, 2, 3].map((i) => (
+            <View key={i} style={styles.skeletonRow}>
+              <View style={{ flex: 1, gap: Spacing.xs }}>
+                <Skeleton width="70%" height={FontSize.base} />
+                <Skeleton width="40%" height={FontSize.sm} />
+              </View>
+              <Skeleton width={50} height={FontSize.sm} />
+            </View>
+          ))}
         </View>
       ) : conversations.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.muted}>No conversations yet.</Text>
+        <View style={styles.emptyState}>
+          <IconSymbol name="waveform" size={IconSize["2xl"]} color={Colors.tertiaryLabel as string} />
+          <Text style={styles.emptyTitle}>No conversations yet</Text>
+          <Text style={styles.emptySubtitle}>Tap Start to research your first deal</Text>
         </View>
       ) : (
         <ScrollView
@@ -146,4 +157,9 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     color: Colors.tertiaryLabel as string,
   },
+  skeletonList: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xl, gap: Spacing.lg },
+  skeletonRow: { flexDirection: "row", alignItems: "center", gap: Spacing.md, paddingVertical: Spacing.md },
+  emptyState: { flex: 1, alignItems: "center", justifyContent: "center", gap: Spacing.md },
+  emptyTitle: { fontSize: FontSize.lg, fontWeight: "600", color: Colors.foreground as string },
+  emptySubtitle: { fontSize: FontSize.sm, color: Colors.mutedForeground as string },
 });
