@@ -20,7 +20,7 @@ import { AnimationColors, Colors } from "@/constants/theme";
 const SPEAK_COLORS = AnimationColors.speaking;
 const SEARCH_COLOR = AnimationColors.search;
 
-function MiniOrbDot({ index, total, rotate }: { index: number; total: number; rotate: Animated.SharedValue<number> }) {
+function MiniOrbDot({ index, total, rotate }: { index: number; total: number; rotate: import("react-native-reanimated").SharedValue<number> }) {
   const angle = (2 * Math.PI * index) / total;
   const style = useAnimatedStyle(() => {
     const a = angle + rotate.value;

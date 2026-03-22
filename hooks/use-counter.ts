@@ -25,7 +25,7 @@ export function useCounter() {
 
   // Track convId in a ref so callbacks always see the latest value
   const convIdRef = useRef<Id<"conversations"> | null>(null);
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const feedCountRef = useRef(0);
 
   useEffect(() => {
@@ -36,7 +36,8 @@ export function useCounter() {
 
   const conversation = useConversation({
     clientTools: {
-      updateIntelCards: async ({ cards }: { cards: IntelCard[] }) => {
+      updateIntelCards: async (params: unknown) => {
+        const { cards } = params as { cards: IntelCard[] };
         if (__DEV__) {
           console.log("[Counter] updateIntelCards received:", JSON.stringify(cards.map(c => ({
             id: c.id, type: c.type, title: c.title?.slice(0, 40),
@@ -68,7 +69,8 @@ export function useCounter() {
         haptics.medium();
         return "Cards displayed";
       },
-      setConversationPhase: async ({ phase }: { phase: string }) => {
+      setConversationPhase: async (params: unknown) => {
+        const { phase } = params as { phase: string };
         const validPhases: ConversationPhase[] = ["idle", "research", "coach", "advisor"];
         if (validPhases.includes(phase as ConversationPhase)) {
           setConversationPhase(phase as ConversationPhase);

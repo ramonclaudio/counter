@@ -63,7 +63,7 @@ export default function SignUpScreen() {
       } else {
         haptics.success();
         // Explicitly send OTP after sign-up
-        await authClient.emailOtp.sendVerificationOtp({ email: email.trim() }).catch(() => {});
+        await authClient.emailOtp.sendVerificationOtp({ email: email.trim(), type: "email-verification" }).catch(() => {});
         setShowVerification(true);
       }
     } catch {

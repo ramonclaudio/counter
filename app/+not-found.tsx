@@ -13,7 +13,7 @@ export default function NotFoundScreen() {
       <Stack.Screen options={{ title: 'Lost?' }} />
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.lg, backgroundColor: colors.background }}>
         <ThemedText variant="title">This page doesn&apos;t exist.</ThemedText>
-        <Link href="/today" style={{ paddingVertical: Spacing.lg, minHeight: TouchTarget.min, justifyContent: 'center' }} accessibilityRole="link" accessibilityLabel="Go to home screen">
+        <Link href="/" style={{ paddingVertical: Spacing.lg, minHeight: TouchTarget.min, justifyContent: 'center' }} accessibilityRole="link" accessibilityLabel="Go to home screen">
           <ThemedText variant="link" color={colors.mutedForeground}>Take me home</ThemedText>
         </Link>
       </View>

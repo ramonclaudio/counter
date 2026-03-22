@@ -35,7 +35,7 @@ const SEARCH_COLOR = AnimationColors.search;
 const DOT_COUNT = 5;
 const DOT_ORBIT_RADIUS = ORB_RING_SIZE / 2 + 16;
 
-function OrbDot({ index, total, rotate }: { index: number; total: number; rotate: Animated.SharedValue<number> }) {
+function OrbDot({ index, total, rotate }: { index: number; total: number; rotate: import("react-native-reanimated").SharedValue<number> }) {
   const angle = (2 * Math.PI * index) / total;
   const dotStyle = useAnimatedStyle(() => {
     const a = angle + rotate.value;
@@ -477,8 +477,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   iconButtonActive: {
-    backgroundColor: Colors.destructiveFill as string,
-    borderColor: Colors.destructiveBorder as string,
+    backgroundColor: Colors.destructiveFill as unknown as string,
+    borderColor: Colors.destructiveBorder as unknown as string,
   },
   endButton: {
     width: TouchTarget.min + 16,

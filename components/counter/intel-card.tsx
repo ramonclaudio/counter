@@ -303,12 +303,12 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   priceChip: {
-    backgroundColor: Colors.successFill as string,
+    backgroundColor: Colors.successFill as unknown as string,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderWidth: 1,
-    borderColor: Colors.successBorder as string,
+    borderColor: Colors.successBorder as unknown as string,
   },
   priceText: {
     fontSize: FontSize.lg,

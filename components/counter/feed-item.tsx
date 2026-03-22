@@ -103,7 +103,7 @@ const s = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.primaryFill as string,
+    backgroundColor: Colors.primaryFill as unknown as string,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 2,

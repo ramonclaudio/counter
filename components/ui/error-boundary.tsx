@@ -95,7 +95,7 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
         </Text>
       </Pressable>
       <Pressable
-        onPress={() => router.push('/(app)/(tabs)/today')}
+        onPress={() => router.push('/(app)')}
         accessibilityRole="button"
         accessibilityLabel="Go home"
         style={({ pressed }) => ({

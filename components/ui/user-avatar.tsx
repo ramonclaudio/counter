@@ -11,7 +11,7 @@ import { useColors } from "@/hooks/use-theme";
 export function UserAvatar({ size = 36 }: { size?: number }) {
   const colors = useColors();
   const user = useQuery(api.auth.getCurrentUser);
-  const initial = (user?.displayName ?? user?.name)?.charAt(0).toUpperCase() ?? "?";
+  const initial = user?.name?.charAt(0).toUpperCase() ?? "?";
 
   return (
     <Pressable
