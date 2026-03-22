@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { View, Text, Pressable, StyleSheet, Linking } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  Linking,
+  LayoutAnimation,
+  UIManager,
+  Platform,
+} from "react-native";
 import { Image } from "expo-image";
 import Animated, {
   useAnimatedStyle,
@@ -9,32 +18,32 @@ import Animated, {
 } from "react-native-reanimated";
 import { useEffect } from "react";
 
-import { MaterialCard } from "@/components/ui/material-card";
-import { Colors, Radius } from "@/constants/theme";
-import { Spacing, FontSize, LineHeight } from "@/constants/layout";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Colors, Radius, Scrim, OnImage, CardTypeColors } from "@/constants/theme";
+import { Spacing, FontSize, LineHeight, IconSize } from "@/constants/layout";
+import { relativeTime } from "@/lib/time";
 import type { IntelCard as IntelCardType } from "@/lib/types";
 
-// Neutral gray-blue placeholder
+if (Platform.OS === "android") {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
+
 const PLACEHOLDER_BLURHASH = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
 
-const TYPE_CONFIG = {
-  price: { color: Colors.systemGreen, label: "Price" },
-  warning: { color: Colors.systemRed, label: "Warning" },
-  alternative: { color: Colors.systemBlue, label: "Alt" },
-  leverage: { color: Colors.systemYellow, label: "Leverage" },
-} as const;
+const TYPE_CONFIG = CardTypeColors;
 
 type Props = { card: IntelCardType };
 
 export function IntelCard({ card }: Props) {
   const config = TYPE_CONFIG[card.type];
-  const translateY = useSharedValue(40);
+  const translateY = useSharedValue(30);
   const opacity = useSharedValue(0);
   const [imageError, setImageError] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
-    translateY.value = withSpring(0, { damping: 18, stiffness: 200 });
-    opacity.value = withTiming(1, { duration: 250 });
+    translateY.value = withSpring(0, { damping: 20, stiffness: 180 });
+    opacity.value = withTiming(1, { duration: 300 });
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -46,29 +55,36 @@ export function IntelCard({ card }: Props) {
     if (card.sourceUrl) Linking.openURL(card.sourceUrl);
   };
 
+  const handleToggle = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded((prev) => !prev);
+  };
+
   const hasPrices = card.prices && card.prices.length > 0;
   const hasImage = !!card.imageUrl && !imageError;
   const hasFavicon = !!card.faviconUrl;
+  const hasHighlights = card.highlights && card.highlights.length > 0;
+  const hasFullValue = !!card.fullValue;
+  const hasDate = !!card.date;
+  const isExpandable = hasFullValue || hasHighlights;
+  const displayPrices = expanded ? card.prices?.slice(0, 6) : card.prices?.slice(0, 4);
 
   return (
     <Animated.View style={animatedStyle}>
-      <MaterialCard style={styles.card}>
-        <View style={[styles.accent, { backgroundColor: config.color as string }]} />
-        <View style={styles.body}>
-          {/* Header: badge + title */}
-          <View style={styles.header}>
-            <View style={[styles.typeBadge, { backgroundColor: `${config.color}18`, borderColor: config.color as string }]}>
-              <Text style={[styles.typeLabel, { color: config.color as string }]}>{config.label}</Text>
-            </View>
-            <Text style={styles.title} numberOfLines={2}>{card.title}</Text>
-          </View>
-
-          {/* Content row: image + text */}
-          <View style={styles.contentRow}>
-            {hasImage && (
+      <Pressable
+        onPress={isExpandable ? handleToggle : undefined}
+        accessibilityRole={isExpandable ? "button" : undefined}
+        accessibilityLabel={`${config.label}: ${card.title}`}
+        accessibilityState={isExpandable ? { expanded } : undefined}
+        accessibilityHint={isExpandable ? "Double tap to expand details" : undefined}
+      >
+        <View style={[styles.card, { backgroundColor: config.bg, borderColor: config.border }]}>
+          {/* Hero image with gradient scrim */}
+          {hasImage && (
+            <View style={expanded ? styles.heroWrap : styles.previewWrap}>
               <Image
                 source={{ uri: card.imageUrl }}
-                style={styles.thumbnail}
+                style={StyleSheet.absoluteFill}
                 contentFit="cover"
                 transition={200}
                 recyclingKey={card.id}
@@ -77,133 +93,274 @@ export function IntelCard({ card }: Props) {
                 cachePolicy="memory-disk"
                 onError={() => setImageError(true)}
               />
-            )}
-            <View style={[styles.textContent, !hasImage && styles.textContentFull]}>
-              {hasPrices && (
-                <View style={styles.priceRow}>
-                  {card.prices!.slice(0, 4).map((price, i) => (
-                    <View key={`${price}-${i}`} style={styles.priceChip}>
-                      <Text style={styles.priceText}>{price}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-              <Text style={styles.value} numberOfLines={hasPrices ? 2 : 3}>
-                {card.value}
-              </Text>
+              <View style={styles.imageScrim} />
+              {/* Source on image */}
+              <View style={styles.imageSource}>
+                {hasFavicon && (
+                  <Image source={{ uri: card.faviconUrl }} style={styles.faviconSmall} contentFit="contain" cachePolicy="memory-disk" />
+                )}
+                <Text style={styles.imageSourceText} numberOfLines={1}>{card.siteName ?? card.source}</Text>
+                {hasDate && <Text style={styles.imageDateText}>{relativeTime(card.date!)}</Text>}
+              </View>
             </View>
-          </View>
+          )}
 
-          {/* Source row: favicon + hostname */}
-          <Pressable onPress={handleSourcePress} hitSlop={8} style={styles.sourceRow}>
-            {hasFavicon && (
-              <Image
-                source={{ uri: card.faviconUrl }}
-                style={styles.favicon}
-                contentFit="contain"
-                cachePolicy="memory-disk"
-              />
+          <View style={styles.body}>
+            {/* Type badge + source (when no image) */}
+            {!hasImage && (
+              <View style={styles.topRow}>
+                <View style={[styles.typeBadge, { borderColor: config.color }]}>
+                  <IconSymbol name={config.icon} size={10} color={config.color} />
+                  <Text style={[styles.typeBadgeLabel, { color: config.color }]}>{config.label}</Text>
+                </View>
+                <Pressable onPress={handleSourcePress} hitSlop={8} style={styles.sourceChip}
+                  accessibilityRole="link"
+                  accessibilityLabel={`Source: ${card.siteName ?? card.source}`}
+                >
+                  {hasFavicon && (
+                    <Image source={{ uri: card.faviconUrl }} style={styles.favicon} contentFit="contain" cachePolicy="memory-disk" />
+                  )}
+                  <Text style={styles.sourceName} numberOfLines={1}>{card.siteName ?? card.source}</Text>
+                  {hasDate && <Text style={styles.dateText}>{relativeTime(card.date!)}</Text>}
+                </Pressable>
+              </View>
             )}
-            <Text style={styles.source} numberOfLines={1}>
-              {card.siteName ?? card.source}
+
+            {/* Type badge on image cards */}
+            {hasImage && (
+              <View style={[styles.typeBadge, { borderColor: config.color, alignSelf: "flex-start" }]}>
+                <IconSymbol name={config.icon} size={10} color={config.color} />
+                <Text style={[styles.typeBadgeLabel, { color: config.color }]}>{config.label}</Text>
+              </View>
+            )}
+
+            {/* Title */}
+            <Text style={styles.title} numberOfLines={expanded ? 6 : 2}>{card.title}</Text>
+
+            {/* Prices - prominent */}
+            {hasPrices && (
+              <View style={styles.priceRow}>
+                {displayPrices!.map((price, i) => (
+                  <View key={`${price}-${i}`} style={styles.priceChip}>
+                    <Text style={styles.priceText}>{price}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Value */}
+            <Text style={styles.value} numberOfLines={expanded ? undefined : 3}>
+              {expanded && hasFullValue ? card.fullValue : card.value}
             </Text>
-          </Pressable>
+
+            {/* Highlights */}
+            {expanded && hasHighlights && (
+              <View style={styles.highlights}>
+                {card.highlights!.map((h, i) => (
+                  <View key={i} style={styles.highlightRow}>
+                    <View style={[styles.highlightDot, { backgroundColor: config.color }]} />
+                    <Text style={styles.highlightText} numberOfLines={3}>{h}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Source URL expanded */}
+            {expanded && card.sourceUrl && (
+              <Pressable onPress={handleSourcePress} hitSlop={8}>
+                <Text style={styles.sourceUrl} numberOfLines={1}>{card.sourceUrl}</Text>
+              </Pressable>
+            )}
+
+            {/* Expand toggle */}
+            {isExpandable && (
+              <Pressable onPress={handleToggle} style={styles.expandRow}
+                accessibilityRole="button"
+                accessibilityLabel={expanded ? "Show less details" : "Show more details"}
+              >
+                <Text style={styles.expandLabel}>{expanded ? "Show less" : "Show more"}</Text>
+                <IconSymbol name={expanded ? "chevron.up" : "chevron.down"} size={10} color={Colors.tertiaryLabel as string} />
+              </Pressable>
+            )}
+          </View>
         </View>
-      </MaterialCard>
+      </Pressable>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: "row",
-    marginBottom: Spacing.sm,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+    borderCurve: "continuous",
+  },
+  // Hero image
+  previewWrap: {
+    height: 140,
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
     overflow: "hidden",
   },
-  accent: {
-    width: 4,
-    borderTopLeftRadius: Radius.sm,
-    borderBottomLeftRadius: Radius.sm,
+  heroWrap: {
+    height: 200,
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
+    overflow: "hidden",
   },
-  body: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    gap: Spacing.sm,
+  imageScrim: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 70,
+    backgroundColor: Scrim.heavy,
   },
-  header: {
+  imageSource: {
+    position: "absolute",
+    bottom: 8,
+    left: 12,
+    right: 12,
     flexDirection: "row",
     alignItems: "center",
+    gap: 6,
+  },
+  faviconSmall: {
+    width: 14,
+    height: 14,
+    borderRadius: 3,
+  },
+  imageSourceText: {
+    fontSize: FontSize.xs,
+    color: OnImage.primary,
+    fontWeight: "600",
+    flex: 1,
+  },
+  imageDateText: {
+    fontSize: FontSize.xs,
+    color: OnImage.quaternary,
+  },
+  body: {
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  // Top row (no image)
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: Spacing.sm,
   },
   typeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     borderWidth: 1,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
+    paddingVertical: 3,
   },
-  typeLabel: {
-    fontSize: FontSize.xs,
-    fontWeight: "700",
+  typeBadgeLabel: {
+    fontSize: 10,
+    fontWeight: "800",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
-  title: {
-    flex: 1,
-    fontSize: FontSize.sm,
-    fontWeight: "600",
-    color: Colors.foreground as string,
-    lineHeight: LineHeight.base,
-  },
-  contentRow: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-  },
-  thumbnail: {
-    width: 72,
-    height: 72,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.secondary as string,
-  },
-  textContent: {
-    flex: 1,
-    gap: Spacing.xs,
-  },
-  textContentFull: {},
-  priceRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 4,
-  },
-  priceChip: {
-    backgroundColor: "rgba(52, 199, 89, 0.12)",
-    borderRadius: Radius.sm,
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 2,
-  },
-  priceText: {
-    fontSize: FontSize.sm,
-    fontWeight: "700",
-    color: Colors.systemGreen as string,
-    fontVariant: ["tabular-nums"],
-  },
-  value: {
-    fontSize: FontSize.xs,
-    color: Colors.mutedForeground as string,
-    lineHeight: LineHeight.base,
-  },
-  sourceRow: {
+  sourceChip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.xs,
+    gap: 5,
+    flex: 1,
+    justifyContent: "flex-end",
   },
   favicon: {
     width: 14,
     height: 14,
     borderRadius: 3,
   },
-  source: {
+  sourceName: {
+    fontSize: FontSize.xs,
+    color: Colors.secondaryLabel as string,
+    fontWeight: "500",
+  },
+  dateText: {
+    fontSize: FontSize.xs,
+    color: Colors.tertiaryLabel as string,
+  },
+  // Title
+  title: {
+    fontSize: FontSize["2xl"],
+    fontWeight: "700",
+    color: Colors.foreground as string,
+    lineHeight: LineHeight["2xl"],
+    letterSpacing: -0.3,
+  },
+  // Prices
+  priceRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.xs,
+  },
+  priceChip: {
+    backgroundColor: Colors.successFill as string,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderWidth: 1,
+    borderColor: Colors.successBorder as string,
+  },
+  priceText: {
+    fontSize: FontSize.lg,
+    fontWeight: "800",
+    color: Colors.systemGreen as string,
+    fontVariant: ["tabular-nums"],
+  },
+  // Value
+  value: {
+    fontSize: FontSize.base,
+    color: Colors.mutedForeground as string,
+    lineHeight: LineHeight.loose,
+  },
+  // Highlights
+  highlights: {
+    gap: Spacing.sm,
+    paddingTop: Spacing.xs,
+  },
+  highlightRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.sm,
+  },
+  highlightDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 8,
+  },
+  highlightText: {
+    flex: 1,
+    fontSize: FontSize.base,
+    color: Colors.foreground as string,
+    lineHeight: LineHeight.loose,
+  },
+  // Source URL
+  sourceUrl: {
     fontSize: FontSize.xs,
     color: Colors.link as string,
+  },
+  // Expand
+  expandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingTop: Spacing.xs,
+    minHeight: 44,
+  },
+  expandLabel: {
+    fontSize: FontSize.sm,
+    color: Colors.tertiaryLabel as string,
+    fontWeight: "600",
   },
 });
