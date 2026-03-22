@@ -217,27 +217,6 @@ function buildSessionContext(feed: FeedItem[], followUp: string): string {
 
 // --- Components ---
 
-function CategoryRow({ onSelect }: { onSelect: (query: string) => void }) {
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
-      {CATEGORIES.map((cat) => (
-        <Pressable
-          key={cat.label}
-          style={styles.categoryItem}
-          onPress={() => { haptics.light(); onSelect(cat.context); }}
-          accessibilityRole="button"
-          accessibilityLabel={cat.label}
-        >
-          <View style={styles.categoryIcon}>
-            <IconSymbol name={cat.icon} size={IconSize["3xl"]} color={Colors.primary as string} />
-          </View>
-          <Text style={styles.categoryLabel}>{cat.label}</Text>
-        </Pressable>
-      ))}
-    </ScrollView>
-  );
-}
-
 function FeedEmptyState({ onSuggestion }: { onSuggestion?: (text: string) => void }) {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(8);
@@ -529,33 +508,73 @@ export default function ConversationScreen() {
       );
     }
 
-    // Home screen with categories
+    // Home screen
     return (
       <SafeAreaView style={styles.root}>
+        {/* Ambient gradient backdrop */}
+        <LinearGradient
+          colors={["transparent", "rgba(0,136,255,0.05)", "rgba(0,136,255,0.08)", "rgba(0,136,255,0.03)", "transparent"]}
+          locations={[0, 0.25, 0.45, 0.7, 1]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
         <View style={styles.header}>
           <Text style={styles.wordmark}>Counter</Text>
           <Pressable onPress={() => { haptics.light(); router.push("/(app)/history"); }} hitSlop={12} accessibilityRole="button" accessibilityLabel="View history">
             <IconSymbol name="clock" size={IconSize.xl} color={Colors.mutedForeground as string} />
           </Pressable>
         </View>
-        <View style={styles.orbArea}>
-          <Orb isSpeaking={false} isConnected={false} isSearching={false} />
-          <Text style={styles.tagline}>{getGreeting()}</Text>
+        <ScrollView contentContainerStyle={styles.homeContent} showsVerticalScrollIndicator={false}>
+          {/* Orb - alive, not dead gray */}
+          <View style={styles.homeOrbWrap}>
+            <Orb isSpeaking={false} isConnected isSearching={false} />
+          </View>
+          {/* Greeting */}
+          <Text style={styles.homeGreeting}>{getGreeting()}</Text>
           {error && <Text style={[styles.statusLabel, { color: Colors.systemRed as string }]}>{error}</Text>}
-          <CategoryRow onSelect={(query) => handleStart(query)} />
-        </View>
-        <View style={styles.controls}>
+          {/* Start button - right under the greeting */}
           <Pressable
-            style={[styles.startButton, isStarting && styles.startButtonDisabled]}
+            style={[styles.homeStartButton, isStarting && styles.startButtonDisabled]}
             onPress={() => handleStart()}
             disabled={isStarting}
             accessibilityRole="button"
             accessibilityLabel="Start conversation"
           >
-            <IconSymbol name="mic.fill" size={IconSize["2xl"]} color={Colors.onColor} />
-            <Text style={styles.startLabel}>{isStarting ? "Connecting..." : "Start"}</Text>
+            <IconSymbol name="mic.fill" size={IconSize["3xl"]} color={Colors.onColor} />
+            <Text style={styles.homeStartLabel}>{isStarting ? "Connecting..." : "Start Conversation"}</Text>
           </Pressable>
-        </View>
+          {/* Categories */}
+          <Text style={styles.homeSectionLabel}>Quick start</Text>
+          <View style={styles.homeCategoryGrid}>
+            {CATEGORIES.map((cat) => (
+              <Pressable
+                key={cat.label}
+                style={({ pressed }) => [styles.homeCategoryCard, pressed && { opacity: 0.7 }]}
+                onPress={() => { haptics.light(); handleStart(cat.context); }}
+                accessibilityRole="button"
+                accessibilityLabel={cat.label}
+              >
+                <IconSymbol name={cat.icon} size={IconSize["2xl"]} color={Colors.primary as string} />
+                <Text style={styles.homeCategoryLabel}>{cat.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+          {/* Suggestions */}
+          <Text style={styles.homeSectionLabel}>Try saying</Text>
+          <View style={styles.homeSuggestions}>
+            {SUGGESTIONS.map((s) => (
+              <Pressable
+                key={s}
+                style={({ pressed }) => [styles.homeSuggestionChip, pressed && { opacity: 0.7 }]}
+                onPress={() => { haptics.light(); handleStart(`The user wants to talk about: ${s}`); }}
+                accessibilityRole="button"
+              >
+                <IconSymbol name="mic.fill" size={IconSize.sm} color={Colors.tertiaryLabel as string} />
+                <Text style={styles.homeSuggestionText}>{s}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -743,7 +762,101 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     zIndex: 1,
   },
-  // --- Orb area (disconnected) ---
+  // --- Home screen (disconnected) ---
+  homeContent: {
+    alignItems: "center",
+    paddingBottom: Spacing["4xl"],
+  },
+  homeOrbWrap: {
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.lg,
+  },
+  homeGreeting: {
+    fontSize: FontSize["5xl"],
+    fontWeight: "700",
+    color: Colors.foreground as string,
+    textAlign: "center",
+    paddingHorizontal: Spacing["3xl"],
+    letterSpacing: -0.5,
+    lineHeight: 32,
+  },
+  homeStartButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    backgroundColor: Colors.primary as string,
+    paddingHorizontal: Spacing["4xl"],
+    paddingVertical: Spacing.xl,
+    borderRadius: Radius.full,
+    shadowColor: Colors.primary as string,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
+    elevation: 10,
+    marginTop: Spacing["2xl"],
+    marginBottom: Spacing["3xl"],
+  },
+  homeStartLabel: {
+    fontSize: FontSize["3xl"],
+    fontWeight: "700",
+    color: Colors.onColor,
+    letterSpacing: 0.2,
+  },
+  homeSectionLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: "600",
+    color: Colors.tertiaryLabel as string,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    alignSelf: "flex-start",
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  homeCategoryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing["2xl"],
+  },
+  homeCategoryCard: {
+    width: (Dimensions.get("window").width - Spacing.lg * 2 - Spacing.md * 2) / 3,
+    alignItems: "center",
+    gap: Spacing.sm,
+    paddingVertical: Spacing.lg,
+    backgroundColor: Colors.card as string,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border as string,
+  },
+  homeCategoryLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: "600",
+    color: Colors.foreground as string,
+  },
+  homeSuggestions: {
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
+    width: "100%",
+  },
+  homeSuggestionChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md + 2,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.card as string,
+    borderWidth: 1,
+    borderColor: Colors.border as string,
+  },
+  homeSuggestionText: {
+    fontSize: FontSize.base,
+    color: Colors.foreground as string,
+    fontWeight: "500",
+  },
+  // --- Orb ---
   orbArea: {
     flex: 1,
     alignItems: "center",
@@ -772,11 +885,11 @@ const styles = StyleSheet.create({
     backgroundColor: SEARCH_COLOR,
   },
   tagline: {
-    fontSize: FontSize.base,
+    fontSize: FontSize.lg,
     color: Colors.mutedForeground as string,
     textAlign: "center",
-    paddingHorizontal: Spacing["4xl"],
-    lineHeight: 22,
+    paddingHorizontal: Spacing["3xl"],
+    lineHeight: 24,
   },
   statusLabel: {
     fontSize: FontSize.base,
@@ -785,31 +898,6 @@ const styles = StyleSheet.create({
   statusBar: {
     alignItems: "center",
     paddingVertical: Spacing.xs,
-  },
-  // --- Categories ---
-  categoryRow: {
-    paddingHorizontal: Spacing.lg,
-    gap: Spacing.xl,
-    paddingTop: Spacing.md,
-  },
-  categoryItem: {
-    alignItems: "center",
-    gap: Spacing.xs,
-  },
-  categoryIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: Colors.primaryFill as unknown as string,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.borderAccent as unknown as string,
-  },
-  categoryLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.secondaryLabel as string,
-    fontWeight: "500",
   },
   // --- Feed (connected) ---
   feed: {
