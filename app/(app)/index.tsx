@@ -7,6 +7,8 @@ import {
   Text,
   TextInput,
   SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
   Dimensions,
   Keyboard,
 } from "react-native";
@@ -596,6 +598,7 @@ export default function ConversationScreen() {
   // --- Connected: feed layout ---
   return (
     <SafeAreaView style={styles.root}>
+    <KeyboardAvoidingView style={styles.keyboardAvoiding} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={0}>
       {/* Ambient gradient backdrop */}
       <LinearGradient
         colors={getPhaseGradient(conversationPhase)}
@@ -713,6 +716,7 @@ export default function ConversationScreen() {
           onDismiss={() => setImmersiveMode(false)}
         />
       )}
+    </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -721,6 +725,9 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.background as string,
+  },
+  keyboardAvoiding: {
+    flex: 1,
   },
   // --- Header ---
   header: {
