@@ -221,13 +221,15 @@ export function useCounter() {
     const convId = await createConversation({ title: "Conversation" });
     setConversationId(convId);
     convIdRef.current = convId;
+    const firstMsg = opts?.firstMessage ?? modeConfig.firstMessage;
+    const overrides = { agent: { firstMessage: firstMsg } };
     // Use signed conversation token via Convex backend (never exposes API key client-side)
     const siteUrl = process.env.EXPO_PUBLIC_CONVEX_SITE_URL;
     if (siteUrl) {
       try {
         const token = await getConversationToken(siteUrl);
         console.log("[Counter] Connecting in", mode, "mode (token auth)");
-        await conversation.startSession({ conversationToken: token });
+        await conversation.startSession({ conversationToken: token, overrides });
         return;
       } catch (e) {
         console.warn("[Counter] Token auth failed, falling back to agentId:", e);
@@ -237,7 +239,7 @@ export function useCounter() {
     const agentId = process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID;
     if (!agentId) throw new Error("Missing EXPO_PUBLIC_ELEVENLABS_AGENT_ID and EXPO_PUBLIC_CONVEX_SITE_URL");
     console.log("[Counter] Connecting in", mode, "mode (public agent)");
-    await conversation.startSession({ agentId });
+    await conversation.startSession({ agentId, overrides });
   }, [conversation, createConversation]);
 
   const endSession = useCallback(async () => {
