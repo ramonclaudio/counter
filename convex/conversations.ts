@@ -65,6 +65,13 @@ export const listConversations = authQuery({
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
       messageCount: c.messages.length,
+      preview:
+        (
+          c.messages.find((m: any) => m.role === 'user')?.content as
+            | string
+            | undefined
+        )?.slice(0, 80) ?? null,
+      intelCount: c.intelCards.length,
     }));
   },
 });

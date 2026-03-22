@@ -1,4 +1,14 @@
+import { useEffect } from "react";
 import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "convex/react";
 import { router } from "expo-router";
@@ -15,6 +25,44 @@ function formatDate(ts: number): string {
   const isToday = d.toDateString() === now.toDateString();
   if (isToday) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   return d.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
+function AnimatedRow({ children, index }: { children: React.ReactNode; index: number }) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(12);
+
+  useEffect(() => {
+    const delay = Math.min(index * 50, 300);
+    opacity.value = withDelay(delay, withTiming(1, { duration: 300 }));
+    translateY.value = withDelay(delay, withSpring(0, { damping: 20, stiffness: 180 }));
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return <Animated.View style={style}>{children}</Animated.View>;
+}
+
+function BreathingIcon() {
+  const scale = useSharedValue(1);
+  useEffect(() => {
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.1, { duration: 1500 }),
+        withTiming(1, { duration: 1500 }),
+      ),
+      -1,
+      true,
+    );
+  }, []);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <Animated.View style={style}>
+      <IconSymbol name="waveform" size={IconSize["2xl"]} color={Colors.tertiaryLabel as string} />
+    </Animated.View>
+  );
 }
 
 export default function HistoryScreen() {
@@ -50,9 +98,9 @@ export default function HistoryScreen() {
         </View>
       ) : conversations.length === 0 ? (
         <View style={styles.emptyState}>
-          <IconSymbol name="waveform" size={IconSize["2xl"]} color={Colors.tertiaryLabel as string} />
-          <Text style={styles.emptyTitle}>No conversations yet</Text>
-          <Text style={styles.emptySubtitle}>Tap Start to research your first deal</Text>
+          <BreathingIcon />
+          <Text style={styles.emptyTitle}>What deal are you hunting?</Text>
+          <Text style={styles.emptySubtitle}>Start a conversation to get real-time intel</Text>
         </View>
       ) : (
         <ScrollView
@@ -60,21 +108,36 @@ export default function HistoryScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {conversations.map((conv) => (
-            <Pressable
-              key={conv._id}
-              style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-              onPress={() => router.push(`/(app)/conversation/${conv._id}`)}
-            >
-              <View style={styles.rowContent}>
-                <Text style={styles.rowTitle} numberOfLines={1}>{conv.title}</Text>
-                <Text style={styles.rowMeta}>
-                  {conv.messageCount} {conv.messageCount === 1 ? "message" : "messages"}
-                </Text>
-              </View>
-              <Text style={styles.rowDate}>{formatDate(conv.updatedAt)}</Text>
-              <IconSymbol name="chevron.right" size={IconSize.sm} color={Colors.tertiaryLabel as string} />
-            </Pressable>
+          {conversations.map((conv, index) => (
+            <AnimatedRow key={conv._id} index={index}>
+              <Pressable
+                style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+                onPress={() => router.push(`/(app)/conversation/${conv._id}`)}
+              >
+                <View
+                  style={[
+                    styles.dot,
+                    {
+                      backgroundColor: (conv.intelCount >= 4
+                        ? Colors.systemGreen
+                        : conv.intelCount >= 1
+                          ? Colors.systemBlue
+                          : Colors.systemGray) as string,
+                    },
+                  ]}
+                />
+                <View style={styles.rowContent}>
+                  <Text style={styles.rowTitle} numberOfLines={1}>{conv.title}</Text>
+                  <Text style={styles.rowMeta} numberOfLines={1}>
+                    {conv.title === "Conversation" && conv.preview
+                      ? conv.preview
+                      : `${conv.messageCount} ${conv.messageCount === 1 ? "message" : "messages"}`}
+                  </Text>
+                </View>
+                <Text style={styles.rowDate}>{formatDate(conv.updatedAt)}</Text>
+                <IconSymbol name="chevron.right" size={IconSize.sm} color={Colors.tertiaryLabel as string} />
+              </Pressable>
+            </AnimatedRow>
           ))}
         </ScrollView>
       )}
@@ -138,6 +201,11 @@ const styles = StyleSheet.create({
   },
   rowPressed: {
     backgroundColor: Colors.secondarySystemFill as string,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   rowContent: {
     flex: 1,
