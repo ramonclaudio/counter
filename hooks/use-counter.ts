@@ -174,7 +174,7 @@ export function useCounter() {
     setSessionMode(mode);
     setError(null);
     const modeConfig = MODE_CONFIGS[mode];
-    // Combine mode instructions + any extra context into a single contextual update
+    // Send mode instructions + context via contextual update after connect (no overrides)
     const contextParts = [modeConfig.systemPrompt];
     if (opts?.context) contextParts.push(opts.context);
     pendingContextRef.current = contextParts.join("\n\n");
@@ -183,14 +183,8 @@ export function useCounter() {
     convIdRef.current = convId;
     const agentId = process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID;
     if (!agentId) throw new Error("Missing EXPO_PUBLIC_ELEVENLABS_AGENT_ID");
-    const firstMsg = opts?.firstMessage ?? modeConfig.firstMessage;
     console.log("[Counter] Connecting in", mode, "mode");
-    await conversation.startSession({
-      agentId,
-      overrides: {
-        agent: { firstMessage: firstMsg },
-      },
-    });
+    await conversation.startSession({ agentId });
   }, [conversation, createConversation]);
 
   const endSession = useCallback(async () => {
