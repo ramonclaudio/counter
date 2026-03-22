@@ -300,8 +300,9 @@ function ImmersiveVoiceOverlay({ isSpeaking, isSearching, phase, mode, micMuted,
   );
 }
 
-function PostSessionSummary({ feed, onNewSession, onDismiss, onFollowUp }: {
+function PostSessionSummary({ feed, onNewSession, onDismiss, onFollowUp, onFeedback }: {
   feed: FeedItem[]; onNewSession: () => void; onDismiss: () => void; onFollowUp: (q: string) => void;
+  onFeedback?: (liked: boolean) => void;
 }) {
   const stats = getSessionStats(feed);
   const opacity = useSharedValue(0);
@@ -365,6 +366,21 @@ function PostSessionSummary({ feed, onNewSession, onDismiss, onFollowUp }: {
           )}
         </View>
 
+        {/* Feedback */}
+        {onFeedback && (
+          <View style={styles.feedbackRow}>
+            <Text style={styles.feedbackLabel}>How was this session?</Text>
+            <View style={styles.feedbackButtons}>
+              <Pressable style={styles.feedbackButton} onPress={() => { haptics.light(); onFeedback(true); }} accessibilityRole="button" accessibilityLabel="Good session">
+                <IconSymbol name="hand.thumbsup.fill" size={IconSize["2xl"]} color={Colors.systemGreen as string} />
+              </Pressable>
+              <Pressable style={styles.feedbackButton} onPress={() => { haptics.light(); onFeedback(false); }} accessibilityRole="button" accessibilityLabel="Bad session">
+                <IconSymbol name="hand.thumbsdown.fill" size={IconSize["2xl"]} color={Colors.systemRed as string} />
+              </Pressable>
+            </View>
+          </View>
+        )}
+
         {/* Follow-up suggestions */}
         <View style={styles.followUpCard}>
           <View style={styles.followUpHeader}>
@@ -397,7 +413,7 @@ function PostSessionSummary({ feed, onNewSession, onDismiss, onFollowUp }: {
 // --- Main Screen ---
 
 export default function ConversationScreen() {
-  const { startSession, endSession, toggleMicMuted, sendTextMessage, status, isSpeaking, conversationPhase, isSearching, error, feedItems, sessionMode } =
+  const { startSession, endSession, toggleMicMuted, sendTextMessage, sendFeedback, canSendFeedback, status, isSpeaking, conversationPhase, isSearching, error, feedItems, sessionMode } =
     useCounter();
   const [micMuted, setMicMutedState] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
@@ -508,6 +524,7 @@ export default function ConversationScreen() {
             onNewSession={() => { dismissSession(); handleStart(); }}
             onDismiss={dismissSession}
             onFollowUp={(q) => { const ctx = buildSessionContext(lastSessionFeed, q); dismissSession(); handleStart({ context: ctx }); }}
+            onFeedback={canSendFeedback ? sendFeedback : undefined}
           />
         </SafeAreaView>
       );
@@ -1169,6 +1186,31 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: Colors.systemGreen as string,
     fontVariant: ["tabular-nums"],
+  },
+  // Feedback
+  feedbackRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.md,
+  },
+  feedbackLabel: {
+    fontSize: FontSize.base,
+    color: Colors.mutedForeground as string,
+    fontWeight: "500",
+  },
+  feedbackButtons: {
+    flexDirection: "row",
+    gap: Spacing.lg,
+  },
+  feedbackButton: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.secondarySystemFill as string,
+    alignItems: "center",
+    justifyContent: "center",
   },
   // Follow-up card
   followUpCard: {

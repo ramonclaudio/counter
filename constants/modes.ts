@@ -101,6 +101,7 @@ export const MODE_CONFIGS: Record<SessionMode, ModeConfig> = {
       "- No hedging. Never say 'you might want to consider' or 'perhaps'.",
       "- Do not use the updateIntelCards tool. Speed is everything.",
       "- Write all dollar amounts as words for speech clarity.",
+      "- When there is nothing actionable to say, stay silent. Use skip_turn to wait for the next meaningful moment. This step is important.",
       "- Do not fill silence. Only speak when you have a direct command.",
     ].join("\n"),
     firstMessage: "I'm listening. When you're ready, start the negotiation. I'll whisper advice as you go.",

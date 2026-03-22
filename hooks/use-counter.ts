@@ -4,7 +4,6 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 
-import { env } from "@/lib/env";
 import { getConversationToken } from "@/lib/elevenlabs";
 import { haptics } from "@/lib/haptics";
 import type { IntelCard, ConversationPhase, Message, FeedItem, SessionMode } from "@/lib/types";
@@ -213,9 +212,22 @@ export function useCounter() {
     const convId = await createConversation({ title: "Conversation" });
     setConversationId(convId);
     convIdRef.current = convId;
+    // Use signed conversation token via Convex backend (never exposes API key client-side)
+    const siteUrl = process.env.EXPO_PUBLIC_CONVEX_SITE_URL;
+    if (siteUrl) {
+      try {
+        const token = await getConversationToken(siteUrl);
+        console.log("[Counter] Connecting in", mode, "mode (token auth)");
+        await conversation.startSession({ conversationToken: token });
+        return;
+      } catch (e) {
+        console.warn("[Counter] Token auth failed, falling back to agentId:", e);
+      }
+    }
+    // Fallback: public agent ID (dev only)
     const agentId = process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID;
-    if (!agentId) throw new Error("Missing EXPO_PUBLIC_ELEVENLABS_AGENT_ID");
-    console.log("[Counter] Connecting in", mode, "mode");
+    if (!agentId) throw new Error("Missing EXPO_PUBLIC_ELEVENLABS_AGENT_ID and EXPO_PUBLIC_CONVEX_SITE_URL");
+    console.log("[Counter] Connecting in", mode, "mode (public agent)");
     await conversation.startSession({ agentId });
   }, [conversation, createConversation]);
 
@@ -226,6 +238,14 @@ export function useCounter() {
   const toggleMicMuted = useCallback(
     (muted: boolean) => {
       conversation.setMicMuted(muted);
+    },
+    [conversation],
+  );
+
+  const sendFeedback = useCallback(
+    (liked: boolean) => {
+      try { conversation.sendFeedback(liked); }
+      catch (e) { console.warn('[Counter] sendFeedback failed:', e); }
     },
     [conversation],
   );
@@ -257,6 +277,8 @@ export function useCounter() {
     endSession,
     toggleMicMuted,
     sendTextMessage,
+    sendFeedback,
+    canSendFeedback: conversation.canSendFeedback,
     status: conversation.status,
     isSpeaking: conversation.isSpeaking,
     intelCards,
