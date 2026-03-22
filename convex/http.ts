@@ -3,7 +3,7 @@ import { httpAction } from './_generated/server';
 import { internal } from './_generated/api';
 import { authComponent, createAuth } from './auth';
 import { resend } from './email';
-import { webhookSecret, elevenlabsApiKey, elevenlabsAgentId } from './env';
+import { webhookSecret, elevenlabsApiKey, elevenlabsAgentId, elevenlabsWebhookSecret } from './env';
 import { SEARCH_TYPES } from './constants';
 
 const http = httpRouter();
@@ -149,6 +149,12 @@ http.route({
   path: '/elevenlabs-webhook',
   method: 'POST',
   handler: httpAction(async (ctx, req) => {
+    // Verify webhook signature (ElevenLabs sends the secret as a bearer token in the header)
+    const sig = req.headers.get('elevenlabs-signature') ?? req.headers.get('authorization');
+    const secret = elevenlabsWebhookSecret();
+    if (!sig || (!sig.includes(secret) && sig !== `Bearer ${secret}`)) {
+      return jsonResponse({ error: 'Invalid signature' }, 401);
+    }
     const body = await req.json() as {
       type?: string;
       data?: {

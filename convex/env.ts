@@ -16,3 +16,4 @@ export const firecrawlApiKey = () => required('FIRECRAWL_API_KEY');
 export const elevenlabsApiKey = () => required('ELEVENLABS_API_KEY');
 export const elevenlabsAgentId = () => required('ELEVENLABS_AGENT_ID');
 export const webhookSecret = () => required('WEBHOOK_SECRET');
+export const elevenlabsWebhookSecret = () => required('ELEVENLABS_WEBHOOK_SECRET');
