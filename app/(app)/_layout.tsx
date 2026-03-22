@@ -24,12 +24,12 @@ export default function AppLayout() {
           ),
           headerShadowVisible: false,
           animation: "slide_from_right",
-          animationDuration: 250,
+          animationDuration: 300,
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="settings" options={{ headerShown: false }} />
-        <Stack.Screen name="history" options={{ headerShown: false }} />
+        <Stack.Screen name="settings" options={{ headerShown: false, animation: "fade_from_bottom" }} />
+        <Stack.Screen name="history" options={{ headerShown: false, animation: "fade_from_bottom" }} />
         <Stack.Screen name="conversation/[id]" options={{ headerShown: false }} />
       </Stack>
     </View>
