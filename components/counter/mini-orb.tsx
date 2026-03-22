@@ -16,9 +16,20 @@ const SIZE = 50;
 const RING = SIZE + 12;
 const DOT_COUNT = 3;
 const DOT_RADIUS = RING / 2 + 8;
-import { AnimationColors, Colors } from "@/constants/theme";
-const SPEAK_COLORS = AnimationColors.speaking;
+import { AnimationColors, Colors, PhaseColors } from "@/constants/theme";
+import type { ConversationPhase } from "@/lib/types";
 const SEARCH_COLOR = AnimationColors.search;
+
+function phaseColors(phase?: ConversationPhase): readonly [string, string, string, string, string] {
+  if (phase === 'research') return AnimationColors.research;
+  if (phase === 'coach') return AnimationColors.coach;
+  if (phase === 'advisor') return AnimationColors.advisor;
+  return AnimationColors.speaking;
+}
+
+function phaseBaseColor(phase?: ConversationPhase): string {
+  return PhaseColors[phase ?? 'idle'];
+}
 
 function MiniOrbDot({ index, total, rotate }: { index: number; total: number; rotate: import("react-native-reanimated").SharedValue<number> }) {
   const angle = (2 * Math.PI * index) / total;
@@ -30,7 +41,7 @@ function MiniOrbDot({ index, total, rotate }: { index: number; total: number; ro
   return <Animated.View style={[s.dot, style]} />;
 }
 
-export function MiniOrb({ isSpeaking, isConnected, isSearching }: { isSpeaking: boolean; isConnected: boolean; isSearching: boolean }) {
+export function MiniOrb({ isSpeaking, isConnected, isSearching, phase }: { isSpeaking: boolean; isConnected: boolean; isSearching: boolean; phase?: ConversationPhase }) {
   const pulse = useSharedValue(1);
   const ring = useSharedValue(0.6);
   const mode = useSharedValue(0); // 0=listen, 1=speak, 2=search, 3=disconnected
@@ -52,14 +63,14 @@ export function MiniOrb({ isSpeaking, isConnected, isSearching }: { isSpeaking: 
       mode.value = 1;
       pulse.value = withRepeat(withSequence(withSpring(1.04, { damping: 6, stiffness: 140 }), withSpring(0.97, { damping: 6, stiffness: 140 })), -1, true);
       ring.value = withRepeat(withSequence(withTiming(1, { duration: 500 }), withTiming(0.55, { duration: 500 })), -1, true);
-      colorProg.value = withRepeat(withTiming(SPEAK_COLORS.length - 1, { duration: 2400, easing: Easing.linear }), -1, false);
+      colorProg.value = withRepeat(withTiming(4, { duration: 2400, easing: Easing.linear }), -1, false);
     } else {
       mode.value = 0;
       pulse.value = withRepeat(withSequence(withTiming(1.01, { duration: 1000, easing: Easing.bezier(0.42, 0, 0.58, 1) }), withTiming(0.99, { duration: 1000, easing: Easing.bezier(0.42, 0, 0.58, 1) })), -1, true);
       ring.value = withTiming(0.75, { duration: 400 });
       colorProg.value = 0;
     }
-  }, [isSpeaking, isConnected, isSearching]);
+  }, [isSpeaking, isConnected, isSearching, phase]);
 
   useEffect(() => {
     dotRotate.value = isSearching
@@ -69,15 +80,18 @@ export function MiniOrb({ isSpeaking, isConnected, isSearching }: { isSpeaking: 
 
   const orbStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
   const ringStyle = useAnimatedStyle(() => ({ opacity: ring.value, transform: [{ scale: interpolate(ring.value, [0.3, 1], [0.95, 1.08]) }] }));
+  const activeColors = phaseColors(phase);
+  const baseColor = phaseBaseColor(phase);
+
   const orbColor = useAnimatedStyle(() => {
     if (mode.value === 3) return { backgroundColor: Colors.systemGray as string, shadowOpacity: 0.1 };
     if (mode.value === 2) return { backgroundColor: SEARCH_COLOR, shadowOpacity: 0.35 };
-    if (mode.value === 1) return { backgroundColor: interpolateColor(colorProg.value, [0, 1, 2, 3, 4], SPEAK_COLORS), shadowOpacity: 0.45 };
-    return { backgroundColor: Colors.primary as string, shadowOpacity: 0.3 };
+    if (mode.value === 1) return { backgroundColor: interpolateColor(colorProg.value, [0, 1, 2, 3, 4], activeColors), shadowOpacity: 0.45 };
+    return { backgroundColor: baseColor, shadowOpacity: 0.3 };
   });
 
-  const ringColor = isSearching ? SEARCH_COLOR : isConnected ? Colors.primary as string : Colors.systemGray as string;
-  const shadowColor = isSearching ? SEARCH_COLOR : Colors.primary as string;
+  const ringColor = isSearching ? SEARCH_COLOR : isConnected ? baseColor : Colors.systemGray as string;
+  const shadowColor = isSearching ? SEARCH_COLOR : baseColor;
 
   return (
     <View style={s.container}>

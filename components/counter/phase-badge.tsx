@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors, Radius } from "@/constants/theme";
+import { Colors, Radius, PhaseColors } from "@/constants/theme";
 import { Spacing, FontSize, IconSize } from "@/constants/layout";
 import { Spring } from "@/constants/motion";
 import type { ConversationPhase } from "@/lib/types";
@@ -20,17 +20,17 @@ const PHASE_CONFIG: Record<
   research: {
     label: "Research",
     icon: "magnifyingglass",
-    color: Colors.systemBlue as string,
+    color: PhaseColors.research,
   },
   coach: {
     label: "Coach",
     icon: "person.fill",
-    color: Colors.systemGreen as string,
+    color: PhaseColors.coach,
   },
   advisor: {
     label: "Live Advisor",
     icon: "bolt.fill",
-    color: Colors.systemOrange as string,
+    color: PhaseColors.advisor,
   },
 };
 
