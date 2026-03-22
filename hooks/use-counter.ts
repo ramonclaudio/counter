@@ -87,15 +87,19 @@ export function useCounter() {
       setMessages([]);
       setFeedItems([]);
       setError(null);
-      // Inject context from previous session if available
+      // Inject mode/context after WebRTC data channel stabilizes
       if (pendingContextRef.current) {
         const ctx = pendingContextRef.current;
         pendingContextRef.current = null;
-        // Small delay to ensure WebRTC data channel is ready
         setTimeout(() => {
-          try { conversation.sendContextualUpdate(ctx); }
-          catch (e) { console.warn('[Counter] Context inject failed:', e); }
-        }, 500);
+          try {
+            if (conversation.status === "connected") {
+              conversation.sendContextualUpdate(ctx);
+            }
+          } catch (e) {
+            console.warn('[Counter] Context inject failed:', e);
+          }
+        }, 1500);
       }
     },
     onDisconnect: () => {
