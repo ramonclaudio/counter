@@ -33,6 +33,14 @@ const PLACEHOLDER_BLURHASH = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
 
 const TYPE_CONFIG = CardTypeColors;
 
+function isRecent(dateStr?: string): boolean {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return false;
+  const hoursAgo = (Date.now() - d.getTime()) / (1000 * 60 * 60);
+  return hoursAgo < 24;
+}
+
 function parseSavings(prices: string[]): { savings: number; label: string } | null {
   if (!prices || prices.length < 2) return null;
   const nums = prices
@@ -85,6 +93,7 @@ export function IntelCard({ card }: Props) {
   const isExpandable = hasFullValue || hasHighlights;
   const displayPrices = expanded ? card.prices?.slice(0, 6) : card.prices?.slice(0, 4);
   const savings = parseSavings(card.prices ?? []);
+  const recent = isRecent(card.date);
 
   return (
     <Animated.View style={animatedStyle}>
@@ -169,6 +178,13 @@ export function IntelCard({ card }: Props) {
               <View style={styles.savingsBadge}>
                 <IconSymbol name="arrow.down.circle.fill" size={12} color={Colors.systemGreen as string} />
                 <Text style={styles.savingsText}>{savings.label}</Text>
+              </View>
+            )}
+
+            {recent && !hasImage && (
+              <View style={styles.recencyBadge}>
+                <IconSymbol name="clock.fill" size={10} color={Colors.systemBlue as string} />
+                <Text style={styles.recencyText}>Updated recently</Text>
               </View>
             )}
 
@@ -351,6 +367,17 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: "700",
     color: Colors.systemGreen as string,
+  },
+  recencyBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+  },
+  recencyText: {
+    fontSize: FontSize.xs,
+    color: Colors.systemBlue as string,
+    fontWeight: "500",
   },
   // Value
   value: {
