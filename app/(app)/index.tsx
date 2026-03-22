@@ -156,12 +156,12 @@ function Orb({ isSpeaking, isConnected, isSearching, phase = "idle", size = "nor
 // --- Categories ---
 
 const CATEGORIES = [
-  { icon: "desktopcomputer", label: "Electronics", context: "The user is shopping for electronics (laptops, phones, TVs, headphones, etc). Focus on price comparisons across retailers, refurbished options, upcoming sales, and spec-for-spec alternatives. Check Best Buy, Amazon, Walmart, B&H, and manufacturer direct." },
-  { icon: "car.fill", label: "Auto", context: "The user is car shopping or negotiating an auto deal. Focus on fair market pricing (KBB, Edmunds), dealer invoice vs MSRP, current incentives/rebates, financing rates, and negotiation leverage points. Check for recalls and reliability data." },
-  { icon: "house.fill", label: "Home", context: "The user is shopping for home goods (furniture, appliances, home improvement). Focus on price comparisons, seasonal sale timing, warranty options, and quality alternatives. Check Wayfair, Home Depot, IKEA, and specialty retailers." },
-  { icon: "tshirt.fill", label: "Fashion", context: "The user is looking for fashion deals. Focus on current sales, coupon codes, outlet alternatives, resale market prices, and upcoming seasonal markdowns. Check brand direct, Nordstrom Rack, SSENSE, and resale platforms." },
-  { icon: "airplane", label: "Travel", context: "The user is looking for travel deals (flights, hotels, packages). Focus on fare comparisons, flexible date pricing, points/miles optimization, and booking timing. Check Google Flights, Kayak, direct airline/hotel sites, and credit card travel portals." },
-  { icon: "cart.fill", label: "Groceries", context: "The user wants to save on groceries. Focus on store price comparisons, current weekly ads, bulk buying value, store brand vs name brand, and cashback/coupon stacking. Check local grocery chains, Costco, Amazon Fresh, and Instacart." },
+  { icon: "desktopcomputer", label: "Electronics", greeting: "Hey! What electronics are you looking at? Tell me the product and I'll dig up the best prices, alternatives, and any deals running right now.", context: "The user is shopping for electronics (laptops, phones, TVs, headphones, etc). Focus on price comparisons across retailers, refurbished options, upcoming sales, and spec-for-spec alternatives. Check Best Buy, Amazon, Walmart, B&H, and manufacturer direct." },
+  { icon: "car.fill", label: "Auto", greeting: "Car shopping? Nice. Tell me what you're looking at, whether you're buying new or used, and I'll pull pricing data, incentives, and negotiation leverage.", context: "The user is car shopping or negotiating an auto deal. Focus on fair market pricing (KBB, Edmunds), dealer invoice vs MSRP, current incentives/rebates, financing rates, and negotiation leverage points. Check for recalls and reliability data." },
+  { icon: "house.fill", label: "Home", greeting: "Looking to upgrade the space? Tell me what home items you need and I'll compare prices, check seasonal timing, and find the best options.", context: "The user is shopping for home goods (furniture, appliances, home improvement). Focus on price comparisons, seasonal sale timing, warranty options, and quality alternatives. Check Wayfair, Home Depot, IKEA, and specialty retailers." },
+  { icon: "tshirt.fill", label: "Fashion", greeting: "Let's find you a deal on something stylish. What brands or pieces are you eyeing? I'll check for sales, coupon codes, and resale options.", context: "The user is looking for fashion deals. Focus on current sales, coupon codes, outlet alternatives, resale market prices, and upcoming seasonal markdowns. Check brand direct, Nordstrom Rack, SSENSE, and resale platforms." },
+  { icon: "airplane", label: "Travel", greeting: "Where are you headed? Give me the dates and destination and I'll compare fares, check points options, and find the best booking window.", context: "The user is looking for travel deals (flights, hotels, packages). Focus on fare comparisons, flexible date pricing, points/miles optimization, and booking timing. Check Google Flights, Kayak, direct airline/hotel sites, and credit card travel portals." },
+  { icon: "cart.fill", label: "Groceries", greeting: "Let's save on groceries. What are you stocking up on? I'll compare store prices, check weekly ads, and find the best bulk deals.", context: "The user wants to save on groceries. Focus on store price comparisons, current weekly ads, bulk buying value, store brand vs name brand, and cashback/coupon stacking. Check local grocery chains, Costco, Amazon Fresh, and Instacart." },
 ] as const;
 
 const SUGGESTIONS = [
@@ -443,12 +443,12 @@ export default function ConversationScreen() {
     if (hasIntel && immersiveMode) setImmersiveMode(false);
   }, [feedItems]);
 
-  const handleStart = async (context?: string) => {
+  const handleStart = async (opts?: { context?: string; firstMessage?: string }) => {
     setIsStarting(true);
     setImmersiveMode(false);
     setShowTextInput(false);
     try {
-      await startSession(context);
+      await startSession(opts);
     } catch (e) {
       console.error("[Counter] Start failed:", e);
     } finally {
@@ -504,7 +504,7 @@ export default function ConversationScreen() {
             feed={lastSessionFeed}
             onNewSession={() => { dismissSession(); handleStart(); }}
             onDismiss={dismissSession}
-            onFollowUp={(q) => { const ctx = buildSessionContext(lastSessionFeed, q); dismissSession(); handleStart(ctx); }}
+            onFollowUp={(q) => { const ctx = buildSessionContext(lastSessionFeed, q); dismissSession(); handleStart({ context: ctx }); }}
           />
         </SafeAreaView>
       );
@@ -552,7 +552,7 @@ export default function ConversationScreen() {
               <Pressable
                 key={cat.label}
                 style={({ pressed }) => [styles.homeCategoryCard, pressed && { opacity: 0.7 }]}
-                onPress={() => { haptics.light(); handleStart(cat.context); }}
+                onPress={() => { haptics.light(); handleStart({ context: cat.context, firstMessage: cat.greeting }); }}
                 accessibilityRole="button"
                 accessibilityLabel={cat.label}
               >
@@ -568,7 +568,7 @@ export default function ConversationScreen() {
               <Pressable
                 key={s}
                 style={({ pressed }) => [styles.homeSuggestionChip, pressed && { opacity: 0.7 }]}
-                onPress={() => { haptics.light(); handleStart(`The user wants to talk about: ${s}`); }}
+                onPress={() => { haptics.light(); handleStart({ context: `The user wants to talk about: ${s}` }); }}
                 accessibilityRole="button"
               >
                 <IconSymbol name="mic.fill" size={IconSize.sm} color={Colors.tertiaryLabel as string} />

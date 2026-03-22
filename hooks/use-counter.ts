@@ -167,16 +167,19 @@ export function useCounter() {
     },
   });
 
-  const startSession = useCallback(async (context?: string) => {
+  const startSession = useCallback(async (opts?: { context?: string; firstMessage?: string }) => {
     setError(null);
-    pendingContextRef.current = context ?? null;
+    pendingContextRef.current = opts?.context ?? null;
     const convId = await createConversation({ title: "Conversation" });
     setConversationId(convId);
     convIdRef.current = convId;
     const agentId = process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID;
     if (!agentId) throw new Error("Missing EXPO_PUBLIC_ELEVENLABS_AGENT_ID");
-    console.log("[Counter] Connecting to agent:", agentId, context ? "(with context)" : "");
-    await conversation.startSession({ agentId });
+    console.log("[Counter] Connecting to agent:", agentId, opts?.context ? "(with context)" : "");
+    await conversation.startSession({
+      agentId,
+      overrides: opts?.firstMessage ? { agent: { firstMessage: opts.firstMessage } } : undefined,
+    });
   }, [conversation, createConversation]);
 
   const endSession = useCallback(async () => {
