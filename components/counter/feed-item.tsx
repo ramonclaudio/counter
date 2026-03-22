@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { Image } from "expo-image";
 
 import { IntelCard } from "@/components/counter/intel-card";
 import { SearchIndicator } from "@/components/counter/search-indicator";
@@ -39,15 +40,42 @@ function AssistantBlock({ item }: { item: Extract<FeedItem, { type: "assistant-m
 }
 
 function IntelSection({ item }: { item: Extract<FeedItem, { type: "intel" }> }) {
+  // Collect unique sources with favicons
+  const sources = item.cards.reduce<{ name: string; favicon?: string }[]>((acc, card) => {
+    const name = card.siteName ?? card.source;
+    if (name && !acc.find((s) => s.name === name)) {
+      acc.push({ name, favicon: card.faviconUrl });
+    }
+    return acc;
+  }, []);
+
   return (
     <View style={s.intelSection}>
       <View style={s.intelHeader}>
         <IconSymbol name="magnifyingglass" size={12} color={Colors.secondaryLabel as string} />
-        <Text style={s.intelLabel}>{item.cards.length} {item.cards.length === 1 ? "result" : "results"} found</Text>
+        <Text style={s.intelLabel}>
+          {item.cards.length} {item.cards.length === 1 ? "result" : "results"} from {sources.length} {sources.length === 1 ? "source" : "sources"}
+        </Text>
       </View>
+      {sources.length > 0 && (
+        <View style={s.sourceRow}>
+          {sources.slice(0, 5).map((src) => (
+            <View key={src.name} style={s.sourceChip}>
+              {src.favicon && (
+                <Image source={{ uri: src.favicon }} style={s.sourceFavicon} contentFit="contain" cachePolicy="memory-disk" />
+              )}
+              <Text style={s.sourceName} numberOfLines={1}>{src.name}</Text>
+            </View>
+          ))}
+        </View>
+      )}
       {item.cards.map((card) => (
         <IntelCard key={card.id} card={card} />
       ))}
+      <View style={s.followUpRow}>
+        <IconSymbol name="bubble.left" size={12} color={Colors.tertiaryLabel as string} />
+        <Text style={s.followUpText}>Ask a follow-up</Text>
+      </View>
     </View>
   );
 }
@@ -136,5 +164,44 @@ const s = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: "600",
     color: Colors.secondaryLabel as string,
+  },
+  sourceRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.xs,
+    paddingBottom: Spacing.xs,
+  },
+  sourceChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.secondarySystemFill as string,
+  },
+  sourceFavicon: {
+    width: 12,
+    height: 12,
+    borderRadius: 2,
+  },
+  sourceName: {
+    fontSize: FontSize.xs,
+    color: Colors.secondaryLabel as string,
+    fontWeight: "500",
+    maxWidth: 80,
+  },
+  followUpRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.xs,
+  },
+  followUpText: {
+    fontSize: FontSize.xs,
+    color: Colors.tertiaryLabel as string,
+    fontWeight: "500",
   },
 });
