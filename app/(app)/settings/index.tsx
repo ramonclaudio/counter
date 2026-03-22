@@ -1,12 +1,12 @@
-import { View, Pressable } from "react-native";
+import { View, Pressable, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Constants from "expo-constants";
 
 import { ThemedText } from "@/components/ui/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
 import { authClient } from "@/lib/auth-client";
-import { Radius } from "@/constants/theme";
 import { Spacing, FontSize, IconSize } from "@/constants/layout";
 import { Opacity } from "@/constants/ui";
 
@@ -49,11 +49,10 @@ export default function SettingsScreen() {
             gap: Spacing.md,
             paddingVertical: Spacing.md,
             paddingHorizontal: Spacing.lg,
-            borderRadius: Radius.lg,
-            borderCurve: "continuous",
-            backgroundColor: colors.card,
-            borderWidth: 1,
-            borderColor: colors.border,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: colors.border,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: colors.border,
           })}
           accessibilityRole="button"
           accessibilityLabel="Sign out"
@@ -63,7 +62,32 @@ export default function SettingsScreen() {
             Sign Out
           </ThemedText>
         </Pressable>
+
+        <Pressable
+          style={({ pressed }) => ({
+            opacity: pressed ? Opacity.pressed : 1,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: Spacing.md,
+            paddingVertical: Spacing.md,
+            paddingHorizontal: Spacing.lg,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: colors.border,
+          })}
+          accessibilityRole="button"
+          accessibilityLabel="Help and feedback"
+        >
+          <IconSymbol name="questionmark.circle" size={IconSize.md} color={colors.mutedForeground} />
+          <ThemedText style={{ fontSize: FontSize.base, fontWeight: "600" }} color={colors.mutedForeground}>
+            Help & Feedback
+          </ThemedText>
+        </Pressable>
       </View>
+
+      <View style={{ flex: 1 }} />
+      <ThemedText style={{ fontSize: FontSize.xs, textAlign: "center", paddingBottom: Spacing.lg }} color={colors.tertiaryLabel}>
+        Counter v{Constants.expoConfig?.version ?? "1.0.0"}
+      </ThemedText>
     </SafeAreaView>
   );
 }
