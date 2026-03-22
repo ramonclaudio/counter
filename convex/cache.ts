@@ -53,4 +53,15 @@ export const setCached = internalMutation({
   },
 });
 
+export const clearAll = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const entries = await ctx.db.query('searchCache').collect();
+    for (const entry of entries) {
+      await ctx.db.delete(entry._id);
+    }
+    return entries.length;
+  },
+});
+
 export { hashQuery };
