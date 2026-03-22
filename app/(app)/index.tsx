@@ -29,6 +29,14 @@ import { Colors, Radius, AnimationColors } from "@/constants/theme";
 import { Spacing, FontSize, TouchTarget, IconSize } from "@/constants/layout";
 import { haptics } from "@/lib/haptics";
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning. What deal are you chasing?";
+  if (hour < 17) return "Good afternoon. What are you shopping for?";
+  if (hour < 21) return "Good evening. Looking for a deal?";
+  return "Late night shopping? Let's find a deal.";
+}
+
 const ORB_SIZE = 180;
 const ORB_RING_SIZE = ORB_SIZE + 40;
 const SPEAK_COLORS = AnimationColors.speaking;
@@ -138,7 +146,7 @@ function FeedEmptyState({ onSuggestion }: { onSuggestion?: (text: string) => voi
           <Pressable
             key={s}
             style={styles.suggestionChip}
-            onPress={() => onSuggestion?.(s)}
+            onPress={() => { haptics.light(); onSuggestion?.(s); }}
             accessibilityRole="button"
             accessibilityLabel={s}
           >
@@ -241,7 +249,7 @@ export default function ConversationScreen() {
         <SafeAreaView style={styles.root}>
           <View style={styles.header}>
             <Text style={styles.wordmark}>Counter</Text>
-            <Pressable onPress={() => router.push("/(app)/history")} hitSlop={12} accessibilityRole="button" accessibilityLabel="View history">
+            <Pressable onPress={() => { haptics.light(); router.push("/(app)/history"); }} hitSlop={12} accessibilityRole="button" accessibilityLabel="View history">
               <IconSymbol name="clock" size={IconSize.xl} color={Colors.mutedForeground as string} />
             </Pressable>
           </View>
@@ -263,7 +271,7 @@ export default function ConversationScreen() {
                 <Text style={styles.startLabel}>New Session</Text>
               </Pressable>
               <Text style={styles.sessionEndFollow}>Try asking about alternatives or price history</Text>
-              <Pressable onPress={dismissSession} hitSlop={12} accessibilityRole="button" accessibilityLabel="Dismiss">
+              <Pressable onPress={() => { haptics.light(); dismissSession(); }} hitSlop={12} accessibilityRole="button" accessibilityLabel="Dismiss">
                 <Text style={styles.dismissLabel}>Dismiss</Text>
               </Pressable>
             </Animated.View>
@@ -276,13 +284,13 @@ export default function ConversationScreen() {
       <SafeAreaView style={styles.root}>
         <View style={styles.header}>
           <Text style={styles.wordmark}>Counter</Text>
-          <Pressable onPress={() => router.push("/(app)/history")} hitSlop={12} accessibilityRole="button" accessibilityLabel="View history">
+          <Pressable onPress={() => { haptics.light(); router.push("/(app)/history"); }} hitSlop={12} accessibilityRole="button" accessibilityLabel="View history">
             <IconSymbol name="clock" size={IconSize.xl} color={Colors.mutedForeground as string} />
           </Pressable>
         </View>
         <View style={styles.orbArea}>
           <Orb isSpeaking={false} isConnected={false} isSearching={false} />
-          <Text style={styles.tagline}>AI deal intelligence, in your corner.</Text>
+          <Text style={styles.tagline}>{getGreeting()}</Text>
           {error && <Text style={[styles.statusLabel, { color: Colors.systemRed as string }]}>{error}</Text>}
         </View>
         <View style={styles.controls}>
@@ -333,7 +341,7 @@ export default function ConversationScreen() {
           <MiniOrb isSpeaking={isSpeaking} isConnected={isConnected} isSearching={isSearching} />
         </View>
         <View style={styles.headerRight}>
-          <Pressable onPress={() => router.push("/(app)/history")} hitSlop={12} accessibilityRole="button" accessibilityLabel="View history">
+          <Pressable onPress={() => { haptics.light(); router.push("/(app)/history"); }} hitSlop={12} accessibilityRole="button" accessibilityLabel="View history">
             <IconSymbol name="clock" size={IconSize.xl} color={Colors.mutedForeground as string} />
           </Pressable>
         </View>
@@ -371,6 +379,7 @@ export default function ConversationScreen() {
         <View style={styles.sessionControls}>
           <Pressable
             style={styles.iconButton}
+            onPress={() => haptics.light()}
             accessibilityRole="button"
             accessibilityLabel="Text input (coming soon)"
           >
