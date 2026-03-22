@@ -16,7 +16,7 @@ import { api } from "@/convex/_generated/api";
 import { useColors } from "@/hooks/use-theme";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors, Radius } from "@/constants/theme";
+import { Colors, Radius, AnimationColors } from "@/constants/theme";
 import { Spacing, FontSize, LineHeight, IconSize } from "@/constants/layout";
 import { haptics } from "@/lib/haptics";
 
@@ -63,6 +63,30 @@ function BreathingIcon() {
     <Animated.View style={style}>
       <IconSymbol name="waveform" size={IconSize["2xl"]} color={Colors.tertiaryLabel as string} />
     </Animated.View>
+  );
+}
+
+function dotColor(intelCount: number): string {
+  if (intelCount >= 4) return Colors.systemGreen as string;
+  if (intelCount >= 1) return Colors.systemBlue as string;
+  return Colors.systemGray as string;
+}
+
+function DotIndicator({ intelCount }: { intelCount: number }) {
+  const color = dotColor(intelCount);
+  return (
+    <View style={[styles.dot, { backgroundColor: color, shadowColor: color }]} />
+  );
+}
+
+function IntelBadge({ count }: { count: number }) {
+  return (
+    <View style={styles.intelBadge}>
+      <IconSymbol name="magnifyingglass" size={IconSize.sm - 2} color={AnimationColors.search} />
+      <Text style={styles.intelBadgeText}>
+        {count} {count === 1 ? "card" : "cards"}
+      </Text>
+    </View>
   );
 }
 
@@ -115,25 +139,18 @@ export default function HistoryScreen() {
                 style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
                 onPress={() => { haptics.light(); router.push(`/(app)/conversation/${conv._id}`); }}
               >
-                <View
-                  style={[
-                    styles.dot,
-                    {
-                      backgroundColor: (conv.intelCount >= 4
-                        ? Colors.systemGreen
-                        : conv.intelCount >= 1
-                          ? Colors.systemBlue
-                          : Colors.systemGray) as string,
-                    },
-                  ]}
-                />
+                <DotIndicator intelCount={conv.intelCount} />
                 <View style={styles.rowContent}>
                   <Text style={styles.rowTitle} numberOfLines={1}>{conv.title}</Text>
-                  <Text style={styles.rowMeta} numberOfLines={1}>
-                    {conv.title === "Conversation" && conv.preview
-                      ? conv.preview
-                      : `${conv.messageCount} ${conv.messageCount === 1 ? "message" : "messages"}`}
-                  </Text>
+                  {conv.preview ? (
+                    <Text style={styles.rowPreview} numberOfLines={1}>{conv.preview}</Text>
+                  ) : null}
+                  <View style={styles.rowMetaRow}>
+                    <Text style={styles.rowMeta}>
+                      {conv.messageCount} {conv.messageCount === 1 ? "msg" : "msgs"}
+                    </Text>
+                    {conv.intelCount > 0 ? <IntelBadge count={conv.intelCount} /> : null}
+                  </View>
                 </View>
                 <Text style={styles.rowDate}>{formatDate(conv.updatedAt)}</Text>
                 <IconSymbol name="chevron.right" size={IconSize.sm} color={Colors.tertiaryLabel as string} />
@@ -195,8 +212,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
+    paddingVertical: Spacing.md + 2,
+    gap: Spacing.sm + 2,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border as string,
   },
@@ -204,23 +221,51 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.secondarySystemFill as string,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
   },
   rowContent: {
     flex: 1,
-    gap: 2,
+    gap: 3,
   },
   rowTitle: {
     fontSize: FontSize.base,
-    fontWeight: "500",
+    fontWeight: "600",
     color: Colors.foreground as string,
     lineHeight: LineHeight.base,
   },
-  rowMeta: {
+  rowPreview: {
     fontSize: FontSize.sm,
+    color: Colors.tertiaryLabel as string,
+    lineHeight: LineHeight.tight,
+  },
+  rowMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginTop: 1,
+  },
+  rowMeta: {
+    fontSize: FontSize.xs,
     color: Colors.mutedForeground as string,
+  },
+  intelBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: AnimationColors.searchFill,
+    paddingHorizontal: Spacing.xs + 2,
+    paddingVertical: 1,
+    borderRadius: Radius.sm,
+  },
+  intelBadgeText: {
+    fontSize: FontSize.xs,
+    fontWeight: "500",
+    color: AnimationColors.search,
   },
   rowDate: {
     fontSize: FontSize.sm,
