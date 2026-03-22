@@ -20,7 +20,7 @@ import { useEffect } from "react";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { haptics } from "@/lib/haptics";
-import { Colors, Radius, Scrim, OnImage, CardTypeColors } from "@/constants/theme";
+import { Colors, Radius, Scrim, OnImage, CardTypeColors, AnimationColors } from "@/constants/theme";
 import { Spacing, FontSize, LineHeight, IconSize } from "@/constants/layout";
 import { relativeTime } from "@/lib/time";
 import type { IntelCard as IntelCardType } from "@/lib/types";
@@ -175,9 +175,9 @@ export function IntelCard({ card }: Props) {
             )}
 
             {savings && (
-              <View style={styles.savingsBadge}>
-                <IconSymbol name="arrow.down.circle.fill" size={12} color={Colors.systemGreen as string} />
-                <Text style={styles.savingsText}>{savings.label}</Text>
+              <View style={styles.savingsPill}>
+                <IconSymbol name="arrow.down.circle.fill" size={16} color={Colors.systemGreen as string} />
+                <Text style={styles.savingsPillText}>{savings.label}</Text>
               </View>
             )}
 
@@ -356,17 +356,29 @@ const styles = StyleSheet.create({
     color: Colors.systemGreen as string,
     fontVariant: ["tabular-nums"],
   },
-  // Savings badge
-  savingsBadge: {
+  // Savings pill
+  savingsPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 6,
     alignSelf: "flex-start",
+    backgroundColor: Colors.successFill as unknown as string,
+    borderWidth: 1,
+    borderColor: Colors.successBorder as unknown as string,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    shadowColor: AnimationColors.savingsGlow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.28,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  savingsText: {
-    fontSize: FontSize.sm,
-    fontWeight: "700",
+  savingsPillText: {
+    fontSize: FontSize.lg,
+    fontWeight: "800",
     color: Colors.systemGreen as string,
+    letterSpacing: -0.2,
   },
   recencyBadge: {
     flexDirection: "row",

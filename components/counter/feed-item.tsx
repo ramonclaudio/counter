@@ -1,13 +1,14 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useState, useMemo } from "react";
+import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { Image } from "expo-image";
 
 import { IntelCard } from "@/components/counter/intel-card";
 import { SearchIndicator } from "@/components/counter/search-indicator";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors, Radius } from "@/constants/theme";
+import { Colors, Radius, CardTypeColors } from "@/constants/theme";
 import { Spacing, FontSize, LineHeight, IconSize } from "@/constants/layout";
-import type { FeedItem } from "@/lib/types";
+import { haptics } from "@/lib/haptics";
+import type { FeedItem, IntelCardType } from "@/lib/types";
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
@@ -39,11 +40,55 @@ function AssistantBlock({ item }: { item: Extract<FeedItem, { type: "assistant-m
   );
 }
 
+type FilterKey = "all" | IntelCardType;
+
+const FILTER_OPTIONS: { key: FilterKey; label: string; color: string }[] = [
+  { key: "all", label: "All", color: Colors.systemBlue as string },
+  { key: "price", label: "Price", color: CardTypeColors.price.color as string },
+  { key: "warning", label: "Warning", color: CardTypeColors.warning.color as string },
+  { key: "alternative", label: "Alternative", color: CardTypeColors.alternative.color as string },
+  { key: "leverage", label: "Leverage", color: CardTypeColors.leverage.color as string },
+];
+
+function FilterChip(
+  { label, count, color, active, onPress }:
+  { label: string; count: number; color: string; active: boolean; onPress: () => void },
+) {
+  return (
+    <Pressable
+      onPress={() => { haptics.light(); onPress(); }}
+      style={[
+        s.filterChip,
+        active
+          ? { backgroundColor: color, borderColor: color }
+          : { backgroundColor: "transparent", borderColor: color },
+      ]}
+    >
+      <Text style={[s.filterChipText, { color: active ? (Colors.onColor as string) : color }]}>
+        {label}{count > 0 ? ` (${count})` : ""}
+      </Text>
+    </Pressable>
+  );
+}
+
 function IntelSection({ item }: { item: Extract<FeedItem, { type: "intel" }> }) {
+  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
+
+  const counts = useMemo(() => {
+    const map: Record<IntelCardType, number> = { price: 0, warning: 0, alternative: 0, leverage: 0 };
+    for (const card of item.cards) map[card.type]++;
+    return map;
+  }, [item.cards]);
+
+  const filteredCards = useMemo(
+    () => activeFilter === "all" ? item.cards : item.cards.filter((c) => c.type === activeFilter),
+    [item.cards, activeFilter],
+  );
+
   // Collect unique sources with favicons
   const sources = item.cards.reduce<{ name: string; favicon?: string }[]>((acc, card) => {
     const name = card.siteName ?? card.source;
-    if (name && !acc.find((s) => s.name === name)) {
+    if (name && !acc.find((src) => src.name === name)) {
       acc.push({ name, favicon: card.faviconUrl });
     }
     return acc;
@@ -69,7 +114,21 @@ function IntelSection({ item }: { item: Extract<FeedItem, { type: "intel" }> }) 
           ))}
         </View>
       )}
-      {item.cards.map((card) => (
+      {item.cards.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.filterRow}>
+          {FILTER_OPTIONS.map((opt) => (
+            <FilterChip
+              key={opt.key}
+              label={opt.label}
+              count={opt.key === "all" ? item.cards.length : counts[opt.key]}
+              color={opt.color}
+              active={activeFilter === opt.key}
+              onPress={() => setActiveFilter(opt.key)}
+            />
+          ))}
+        </ScrollView>
+      )}
+      {filteredCards.map((card) => (
         <IntelCard key={card.id} card={card} />
       ))}
       <View style={s.followUpRow}>
@@ -175,10 +234,28 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
+    paddingHorizontal: Spacing.sm + 2,
+    paddingVertical: 4,
     borderRadius: Radius.full,
-    backgroundColor: Colors.secondarySystemFill as string,
+    backgroundColor: Colors.tertiarySystemFill as string,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.separator as string,
+  },
+  filterRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+    paddingBottom: Spacing.sm,
+    paddingHorizontal: 2,
+  },
+  filterChip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+  },
+  filterChipText: {
+    fontSize: FontSize.sm,
+    fontWeight: "600",
   },
   sourceFavicon: {
     width: 12,
