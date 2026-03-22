@@ -8,7 +8,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { useColors } from "@/hooks/use-theme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { IntelCard } from "@/components/counter/intel-card";
-import { Colors, OnImage, Radius } from "@/constants/theme";
+import { Colors, OnImage, Radius, AnimationColors } from "@/constants/theme";
 import { Spacing, FontSize, LineHeight, IconSize } from "@/constants/layout";
 import type { IntelCard as IntelCardType, Message } from "@/lib/types";
 
@@ -91,17 +91,22 @@ export default function ConversationDetailScreen() {
 
           {/* Intel Cards */}
           {(conv.intelCards as IntelCardType[]).length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Intel</Text>
-              {(conv.intelCards as IntelCardType[]).map((card) => (
-                <IntelCard key={card.id} card={card} />
-              ))}
+            <View style={styles.intelSection}>
+              <View style={styles.intelAccent} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.intelSectionTitle}>
+                  {(conv.intelCards as IntelCardType[]).length} {(conv.intelCards as IntelCardType[]).length === 1 ? "finding" : "findings"}
+                </Text>
+                {(conv.intelCards as IntelCardType[]).map((card) => (
+                  <IntelCard key={card.id} card={card} />
+                ))}
+              </View>
             </View>
           )}
 
           {conv.messages.length === 0 && conv.intelCards.length === 0 && (
             <View style={styles.center}>
-              <Text style={styles.muted}>No content in this conversation.</Text>
+              <Text style={styles.muted}>This conversation has no saved content.</Text>
             </View>
           )}
         </ScrollView>
@@ -175,6 +180,29 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.6,
     paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  intelSection: {
+    flexDirection: "row",
+    marginTop: Spacing.lg,
+    marginHorizontal: Spacing.md,
+    backgroundColor: AnimationColors.searchFill,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    overflow: "hidden",
+  },
+  intelAccent: {
+    width: 3,
+    backgroundColor: AnimationColors.search,
+    borderRadius: 2,
+    marginRight: Spacing.md,
+  },
+  intelSectionTitle: {
+    fontSize: FontSize.sm,
+    fontWeight: "700",
+    color: AnimationColors.search,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
     marginBottom: Spacing.sm,
   },
   bubbles: {
