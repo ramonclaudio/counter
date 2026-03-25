@@ -166,10 +166,26 @@ const CATEGORIES = [
 ] as const;
 
 const SUGGESTIONS = [
-  "Looking for a laptop",
-  "Car shopping",
-  "Negotiating rent",
-  "Best phone deals",
+  {
+    label: "Looking for a laptop",
+    greeting: "Laptop shopping! What kind are you looking for? Tell me the use case, any brands you like, and your budget, and I'll find the best options and deals.",
+    context: "The user is shopping for a laptop. Ask about use case (work, gaming, school, creative), preferred brands, screen size, and budget before searching. Compare prices across retailers, check for student discounts, and find refurbished options.",
+  },
+  {
+    label: "Car shopping",
+    greeting: "Car shopping? Tell me what you're looking at: new or used, any models in mind, and your budget. I'll pull pricing data and negotiation leverage.",
+    context: "The user is car shopping. Ask about new vs used, body style, must-have features, and budget. Pull fair market pricing, dealer invoice vs MSRP, current incentives, and negotiation tactics.",
+  },
+  {
+    label: "Negotiating rent",
+    greeting: "Rent negotiation, let's get you a better deal. Tell me your current rent, location, and when your lease is up, and I'll find leverage points.",
+    context: "The user wants to negotiate rent. Ask about current rent, apartment size, location, lease renewal date, and tenure. Find comparable listings, vacancy rates, and build negotiation talking points.",
+  },
+  {
+    label: "Best phone deals",
+    greeting: "Phone shopping! iPhone or Android? Any specific model in mind? Tell me what you need and I'll find the best deals and trade-in values.",
+    context: "The user is shopping for a phone. Ask about iPhone vs Android, storage, carrier, and buy outright vs finance. Compare carrier deals, check trade-in values, and find active promotions.",
+  },
 ];
 
 // --- Post-session summary helpers ---
@@ -238,7 +254,7 @@ function buildFollowUpMessage(feed: FeedItem[], followUp: string): string {
 
 // --- Components ---
 
-function FeedEmptyState({ onSuggestion }: { onSuggestion?: (text: string) => void }) {
+function FeedEmptyState({ onSuggestion }: { onSuggestion?: (s: typeof SUGGESTIONS[number]) => void }) {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(8);
 
@@ -260,13 +276,13 @@ function FeedEmptyState({ onSuggestion }: { onSuggestion?: (text: string) => voi
       <View style={styles.suggestionsRow}>
         {SUGGESTIONS.map((s) => (
           <Pressable
-            key={s}
+            key={s.label}
             style={styles.suggestionChip}
             onPress={() => { haptics.light(); onSuggestion?.(s); }}
             accessibilityRole="button"
-            accessibilityLabel={s}
+            accessibilityLabel={s.label}
           >
-            <Text style={styles.suggestionText}>{s}</Text>
+            <Text style={styles.suggestionText}>{s.label}</Text>
           </Pressable>
         ))}
       </View>
@@ -626,14 +642,14 @@ export default function ConversationScreen() {
           <View style={styles.homeSuggestions}>
             {SUGGESTIONS.map((s) => (
               <Pressable
-                key={s}
+                key={s.label}
                 style={({ pressed }) => [styles.homeSuggestionChip, pressed && { opacity: 0.7 }]}
-                onPress={() => { haptics.light(); handleStart({ context: `The user wants to talk about: ${s}` }); }}
+                onPress={() => { haptics.light(); handleStart({ context: s.context, firstMessage: s.greeting }); }}
                 accessibilityRole="button"
-                accessibilityLabel={`Start conversation about ${s}`}
+                accessibilityLabel={`Start conversation about ${s.label}`}
               >
                 <IconSymbol name="mic.fill" size={IconSize.sm} color={Colors.tertiaryLabel as string} />
-                <Text style={styles.homeSuggestionText}>{s}</Text>
+                <Text style={styles.homeSuggestionText}>{s.label}</Text>
               </Pressable>
             ))}
           </View>
@@ -696,7 +712,7 @@ export default function ConversationScreen() {
       {/* Feed */}
       {feedData.length === 0 ? (
         <View style={[styles.feed, styles.feedContent]}>
-          <FeedEmptyState />
+          <FeedEmptyState onSuggestion={(s) => sendTextMessage(s.label)} />
         </View>
       ) : (
         <View style={styles.feed}>
