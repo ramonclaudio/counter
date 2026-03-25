@@ -9,11 +9,6 @@
     "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": false,
-      "splash": {
-        "image": "./assets/splash-image.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#0E0E0E"
-      },
       "bundleIdentifier": "com.rmncldyo.counter",
       "appleTeamId": "SWH9LXWCC3",
       "buildNumber": "1",
@@ -45,7 +40,14 @@
           }
         }
       ],
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-image.png",
+          "imageResizeMode": "contain",
+          "backgroundColor": "#0E0E0E"
+        }
+      ],
       "expo-secure-store",
       "expo-web-browser",
       "@livekit/react-native-expo-plugin",
