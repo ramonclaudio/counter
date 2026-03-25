@@ -194,12 +194,17 @@ const FOLLOWUP_SUGGESTIONS = [
   "Get price history",
 ];
 
-function buildSessionContext(feed: FeedItem[], followUp: string): string {
-  const stats = getSessionStats(feed);
+function buildSessionContext(feed: FeedItem[]): string {
   const parts: string[] = [];
-  parts.push(`The user just completed a session. They want to follow up: "${followUp}".`);
+  const userMsgs = feed
+    .filter((f): f is Extract<FeedItem, { type: "user-message" }> => f.type === "user-message")
+    .map(f => f.message.content);
+  if (userMsgs.length > 0) {
+    parts.push(`Previous session topic: ${userMsgs[0]}`);
+  }
+  const stats = getSessionStats(feed);
   if (stats.total > 0) {
-    parts.push(`Previous session found ${stats.total} intel cards:`);
+    parts.push(`Found ${stats.total} intel cards:`);
     const allCards: IntelCard[] = [];
     for (const item of feed) {
       if (item.type === "intel") allCards.push(...item.cards);
@@ -209,13 +214,26 @@ function buildSessionContext(feed: FeedItem[], followUp: string): string {
       parts.push(`- [${card.type}] ${card.title}${price} (source: ${card.source})`);
     }
   }
+  return parts.join("\n");
+}
+
+function buildFollowUpMessage(feed: FeedItem[], followUp: string): string {
   const userMsgs = feed
     .filter((f): f is Extract<FeedItem, { type: "user-message" }> => f.type === "user-message")
     .map(f => f.message.content);
-  if (userMsgs.length > 0) {
-    parts.push(`User was asking about: ${userMsgs[0]}`);
+  const topic = userMsgs[0] ?? "the previous topic";
+  const allCards: IntelCard[] = [];
+  for (const item of feed) {
+    if (item.type === "intel") allCards.push(...item.cards);
   }
-  return parts.join("\n");
+  const cardSummary = allCards.slice(0, 4).map(c => {
+    const price = c.prices?.[0] ? ` at ${c.prices[0]}` : "";
+    return `${c.title}${price} from ${c.source}`;
+  }).join("; ");
+  const parts = [`I was just researching "${topic}".`];
+  if (cardSummary) parts.push(`You found: ${cardSummary}.`);
+  parts.push(`Now ${followUp.toLowerCase()}.`);
+  return parts.join(" ");
 }
 
 // --- Components ---
@@ -510,7 +528,7 @@ export default function ConversationScreen() {
             feed={lastSessionFeed}
             onNewSession={() => { dismissSession(); handleStart(); }}
             onDismiss={dismissSession}
-            onFollowUp={(q) => { const ctx = buildSessionContext(lastSessionFeed, q); dismissSession(); handleStart({ context: ctx, firstMessage: q }); }}
+            onFollowUp={(q) => { const ctx = buildSessionContext(lastSessionFeed); const msg = buildFollowUpMessage(lastSessionFeed, q); dismissSession(); handleStart({ context: ctx, firstMessage: msg }); }}
             onFeedback={canSendFeedback ? (liked: boolean) => {
               sendFeedback(liked);
               if (liked && !reviewRequested.current) {
