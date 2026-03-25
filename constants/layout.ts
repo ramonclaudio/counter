@@ -71,3 +71,18 @@ export const IconSize = {
   "5xl": 48,
   "6xl": 64,
 } as const;
+
+export const FontFamily = {
+  thin: "Geist_100Thin",
+  extraLight: "Geist_200ExtraLight",
+  light: "Geist_300Light",
+  regular: "Geist_400Regular",
+  medium: "Geist_500Medium",
+  semiBold: "Geist_600SemiBold",
+  bold: "Geist_700Bold",
+  extraBold: "Geist_800ExtraBold",
+  black: "Geist_900Black",
+  mono: "GeistMono_400Regular",
+  monoMedium: "GeistMono_500Medium",
+  monoBold: "GeistMono_700Bold",
+} as const;

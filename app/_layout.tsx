@@ -16,6 +16,20 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import "react-native-reanimated";
 import { ElevenLabsProvider } from "@elevenlabs/react-native";
 import { registerGlobals } from "@livekit/react-native";
+import {
+  Geist_400Regular,
+  Geist_500Medium,
+  Geist_600SemiBold,
+  Geist_700Bold,
+  Geist_800ExtraBold,
+  Geist_900Black,
+} from "@expo-google-fonts/geist";
+import {
+  GeistMono_400Regular,
+  GeistMono_500Medium,
+  GeistMono_700Bold,
+} from "@expo-google-fonts/geist-mono";
+import { useFonts } from "expo-font";
 
 import { authClient } from "@/lib/auth-client";
 import { env } from "@/lib/env";
@@ -24,6 +38,15 @@ import { OfflineBanner } from "@/components/ui/offline-banner";
 import { Duration } from "@/constants/ui";
 
 registerGlobals();
+
+// Suppress LiveKit transport-level WebSocket errors that surface as unhandled rejections.
+// LiveKit reconnects internally; these are not actionable.
+const _prev = globalThis.ErrorUtils?.getGlobalHandler?.();
+globalThis.ErrorUtils?.setGlobalHandler?.((error: any, isFatal?: boolean) => {
+  const msg = error?.message ?? String(error);
+  if (!isFatal && (msg.includes("WebSocket") || msg.includes("livekit"))) return;
+  _prev?.(error, isFatal);
+});
 
 const convex = new ConvexReactClient(env.convexUrl, {
   expectAuth: true,
@@ -39,6 +62,20 @@ SplashScreen.setOptions({ duration: Duration.splash, fade: true });
 export const unstable_settings = { initialRouteName: "(auth)" };
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Geist_400Regular,
+    Geist_500Medium,
+    Geist_600SemiBold,
+    Geist_700Bold,
+    Geist_800ExtraBold,
+    Geist_900Black,
+    GeistMono_400Regular,
+    GeistMono_500Medium,
+    GeistMono_700Bold,
+  });
+
+  if (!fontsLoaded) return null;
+
   return (
     <ConvexBetterAuthProvider client={convex} authClient={authClient}>
       <ElevenLabsProvider>
