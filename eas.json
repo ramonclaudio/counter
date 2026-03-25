@@ -7,7 +7,10 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "channel": "development"
+      "channel": "development",
+      "cache": {
+        "paths": ["node_modules", "ios/Pods"]
+      }
     },
     "development:simulator": {
       "extends": "development",
@@ -28,6 +31,9 @@
     "production": {
       "autoIncrement": true,
       "channel": "production",
+      "cache": {
+        "paths": ["node_modules", "ios/Pods"]
+      },
       "ios": {
         "credentialsSource": "remote"
       }

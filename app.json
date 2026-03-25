@@ -4,9 +4,14 @@
     "slug": "counter",
     "description": "Real-time deal intelligence. Voice AI that fights for your side in any purchase or negotiation.",
     "version": "1.0.0",
-    "orientation": "default",
+    "orientation": "portrait",
     "scheme": "counter",
-    "userInterfaceStyle": "automatic",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-image.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.rmncldyo.counter",
@@ -30,6 +35,7 @@
     },
     "plugins": [
       ["expo-router", { "asyncRoutes": { "default": "development" } }],
+      "expo-splash-screen",
       "expo-secure-store",
       "expo-web-browser",
       "@livekit/react-native-expo-plugin",
@@ -39,6 +45,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "updates": {
+      "url": "https://u.expo.dev/27495040-f0ab-4f2f-b207-72a0dbc118b6",
+      "enableBsdiffPatchSupport": true
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     },
     "extra": {
       "router": {},

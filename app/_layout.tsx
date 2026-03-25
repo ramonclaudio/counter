@@ -7,6 +7,7 @@ import {
 } from "@react-navigation/native";
 import { Stack, usePathname, useGlobalSearchParams } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import * as SystemUI from "expo-system-ui";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { View } from "react-native";
@@ -32,6 +33,7 @@ const convex = new ConvexReactClient(env.convexUrl, {
 export { AppErrorBoundary as ErrorBoundary } from "@/components/ui/error-boundary";
 
 SplashScreen.preventAutoHideAsync();
+SystemUI.setBackgroundColorAsync("#000000");
 SplashScreen.setOptions({ duration: Duration.splash, fade: true });
 
 export const unstable_settings = { initialRouteName: "(auth)" };

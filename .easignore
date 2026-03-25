@@ -1,0 +1,11 @@
+.expo
+.git
+dist
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+.env.example
+.env.convex.local
+README.md
