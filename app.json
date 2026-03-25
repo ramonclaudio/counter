@@ -7,13 +7,13 @@
     "orientation": "portrait",
     "scheme": "counter",
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash-image.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0E0E0E"
-    },
     "ios": {
       "supportsTablet": false,
+      "splash": {
+        "image": "./assets/splash-image.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#0E0E0E"
+      },
       "bundleIdentifier": "com.rmncldyo.counter",
       "appleTeamId": "SWH9LXWCC3",
       "buildNumber": "1",
