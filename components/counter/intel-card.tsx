@@ -21,7 +21,7 @@ import { useEffect } from "react";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { haptics } from "@/lib/haptics";
 import { Colors, Radius, Scrim, OnImage, CardTypeColors, AnimationColors } from "@/constants/theme";
-import { Spacing, FontSize, LineHeight, IconSize } from "@/constants/layout";
+import { Spacing, FontSize, LineHeight, IconSize, FontFamily } from "@/constants/layout";
 import { relativeTime } from "@/lib/time";
 import type { IntelCard as IntelCardType } from "@/lib/types";
 
@@ -278,12 +278,13 @@ const styles = StyleSheet.create({
   imageSourceText: {
     fontSize: FontSize.xs,
     color: OnImage.primary,
-    fontWeight: "600",
+    fontFamily: FontFamily.semiBold,
     flex: 1,
   },
   imageDateText: {
     fontSize: FontSize.xs,
     color: OnImage.quaternary,
+    fontFamily: FontFamily.regular,
   },
   body: {
     padding: Spacing.md,
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
   },
   typeBadgeLabel: {
     fontSize: 10,
-    fontWeight: "800",
+    fontFamily: FontFamily.extraBold,
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
@@ -326,16 +327,17 @@ const styles = StyleSheet.create({
   sourceName: {
     fontSize: FontSize.xs,
     color: Colors.secondaryLabel as string,
-    fontWeight: "500",
+    fontFamily: FontFamily.medium,
   },
   dateText: {
     fontSize: FontSize.xs,
     color: Colors.tertiaryLabel as string,
+    fontFamily: FontFamily.regular,
   },
   // Title
   title: {
     fontSize: FontSize["2xl"],
-    fontWeight: "700",
+    fontFamily: FontFamily.bold,
     color: Colors.foreground as string,
     lineHeight: LineHeight["2xl"],
     letterSpacing: -0.3,
@@ -356,7 +358,7 @@ const styles = StyleSheet.create({
   },
   priceText: {
     fontSize: FontSize.lg,
-    fontWeight: "800",
+    fontFamily: FontFamily.monoBold,
     color: Colors.systemGreen as string,
     fontVariant: ["tabular-nums"],
   },
@@ -380,7 +382,7 @@ const styles = StyleSheet.create({
   },
   savingsPillText: {
     fontSize: FontSize.lg,
-    fontWeight: "800",
+    fontFamily: FontFamily.monoBold,
     color: Colors.systemGreen as string,
     letterSpacing: -0.2,
   },
@@ -393,13 +395,14 @@ const styles = StyleSheet.create({
   recencyText: {
     fontSize: FontSize.xs,
     color: Colors.systemBlue as string,
-    fontWeight: "500",
+    fontFamily: FontFamily.medium,
   },
   // Value
   value: {
     fontSize: FontSize.base,
     color: Colors.mutedForeground as string,
     lineHeight: LineHeight.loose,
+    fontFamily: FontFamily.regular,
   },
   // Highlights
   highlights: {
@@ -422,11 +425,13 @@ const styles = StyleSheet.create({
     fontSize: FontSize.base,
     color: Colors.foreground as string,
     lineHeight: LineHeight.loose,
+    fontFamily: FontFamily.regular,
   },
   // Source URL
   sourceUrl: {
     fontSize: FontSize.xs,
     color: Colors.link as string,
+    fontFamily: FontFamily.regular,
   },
   // Expand
   expandRow: {
@@ -440,6 +445,6 @@ const styles = StyleSheet.create({
   expandLabel: {
     fontSize: FontSize.sm,
     color: Colors.tertiaryLabel as string,
-    fontWeight: "600",
+    fontFamily: FontFamily.semiBold,
   },
 });

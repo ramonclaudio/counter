@@ -11,7 +11,7 @@ import Animated, {
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors, Radius, PhaseColors } from "@/constants/theme";
-import { Spacing, FontSize, IconSize } from "@/constants/layout";
+import { Spacing, FontSize, IconSize, FontFamily } from "@/constants/layout";
 import { Spring } from "@/constants/motion";
 import type { ConversationPhase, SessionMode } from "@/lib/types";
 
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: FontSize.sm,
-    fontWeight: "600",
+    fontFamily: FontFamily.semiBold,
   },
   dot: {
     width: 8,

@@ -6,7 +6,7 @@ import { IntelCard } from "@/components/counter/intel-card";
 import { SearchIndicator } from "@/components/counter/search-indicator";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors, Radius, CardTypeColors } from "@/constants/theme";
-import { Spacing, FontSize, LineHeight, IconSize } from "@/constants/layout";
+import { Spacing, FontSize, LineHeight, IconSize, FontFamily } from "@/constants/layout";
 import { haptics } from "@/lib/haptics";
 import type { FeedItem, IntelCardType } from "@/lib/types";
 
@@ -177,11 +177,13 @@ const s = StyleSheet.create({
     color: Colors.onColor,
     fontSize: FontSize.base,
     lineHeight: LineHeight.relaxed,
+    fontFamily: FontFamily.regular,
   },
   userTime: {
     fontSize: FontSize.xs,
     color: Colors.tertiaryLabel as string,
     marginTop: Spacing.xxs,
+    fontFamily: FontFamily.regular,
   },
   // Assistant
   assistantRow: {
@@ -205,11 +207,13 @@ const s = StyleSheet.create({
     color: Colors.foreground as string,
     fontSize: FontSize.base,
     lineHeight: LineHeight.loose,
+    fontFamily: FontFamily.regular,
   },
   assistantTime: {
     fontSize: FontSize.xs,
     color: Colors.tertiaryLabel as string,
     marginTop: Spacing.xxs,
+    fontFamily: FontFamily.regular,
   },
   // Intel
   intelSection: {
@@ -224,7 +228,7 @@ const s = StyleSheet.create({
   },
   intelLabel: {
     fontSize: FontSize.sm,
-    fontWeight: "600",
+    fontFamily: FontFamily.semiBold,
     color: Colors.secondaryLabel as string,
   },
   sourceRow: {
@@ -258,7 +262,7 @@ const s = StyleSheet.create({
   },
   filterChipText: {
     fontSize: FontSize.sm,
-    fontWeight: "600",
+    fontFamily: FontFamily.semiBold,
   },
   sourceFavicon: {
     width: 12,
@@ -268,7 +272,7 @@ const s = StyleSheet.create({
   sourceName: {
     fontSize: FontSize.xs,
     color: Colors.secondaryLabel as string,
-    fontWeight: "500",
+    fontFamily: FontFamily.medium,
     maxWidth: 80,
   },
   followUpRow: {
@@ -282,6 +286,6 @@ const s = StyleSheet.create({
   followUpText: {
     fontSize: FontSize.xs,
     color: Colors.tertiaryLabel as string,
-    fontWeight: "500",
+    fontFamily: FontFamily.medium,
   },
 });

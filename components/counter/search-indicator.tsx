@@ -9,7 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useEffect } from "react";
 
-import { Spacing, FontSize } from "@/constants/layout";
+import { Spacing, FontSize, FontFamily } from "@/constants/layout";
 import { AnimationColors } from "@/constants/theme";
 
 const AMBER = AnimationColors.search;
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: FontSize.sm,
     color: AMBER_LIGHT,
-    fontWeight: "600",
+    fontFamily: FontFamily.semiBold,
     letterSpacing: 0.3,
   },
   dots: {
