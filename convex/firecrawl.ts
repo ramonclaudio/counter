@@ -1,7 +1,8 @@
 import { internalAction } from './_generated/server';
+import type { Infer } from 'convex/values';
 import { v } from 'convex/values';
 import { firecrawlApiKey } from './env';
-import { FIRECRAWL_SEARCH_LIMIT, INTEL_CARD_TYPES } from './constants';
+import { FIRECRAWL_SEARCH_LIMIT, INTEL_CARD_TYPES, type IntelCardType, intelCardValidator } from './constants';
 
 const FIRECRAWL_SEARCH_URL = 'https://api.firecrawl.dev/v2/search';
 
@@ -50,24 +51,10 @@ type FirecrawlResponse = {
   creditsUsed?: number;
 };
 
-export type IntelCard = {
-  id: string;
-  type: string;
-  title: string;
-  value: string;
-  fullValue?: string;
-  highlights?: string[];
-  source: string;
-  sourceUrl?: string;
-  imageUrl?: string;
-  prices?: string[];
-  siteName?: string;
-  faviconUrl?: string;
-  date?: string;
-};
+type IntelCard = Infer<typeof intelCardValidator>;
 
-// Match $XX+ or $X,XXX patterns (min 2 digits to avoid noise)
-const PRICE_REGEX = /\$\d{2,3}(?:,\d{3})*(?:\.\d{2})?/g;
+// Match $XX+ without commas, or $X,XXX+ with commas (min 2 digits to avoid $1/$2 noise)
+const PRICE_REGEX = /\$(?:\d{1,3}(?:,\d{3})+|\d{2,})(?:\.\d{2})?/g;
 
 function simpleHash(str: string): string {
   let hash = 0;
@@ -143,20 +130,65 @@ function getHostname(url: string): string {
   }
 }
 
+const EXCLUDE_TAGS = ['nav', 'footer', 'header', 'aside'];
+
 const SCRAPE_OPTIONS = {
   formats: ['markdown'],
   onlyMainContent: true,
+  excludeTags: EXCLUDE_TAGS,
+  maxAge: 3600000,
+  timeout: 15000,
 };
 
+const SCRAPE_OPTIONS_LIGHT = {
+  formats: ['summary'],
+  onlyMainContent: true,
+  excludeTags: EXCLUDE_TAGS,
+  maxAge: 3600000,
+  timeout: 15000,
+};
+
+const FETCH_TIMEOUT_MS = 20000;
+const RETRY_DELAY_MS = 2000;
+
+async function firecrawlFetch(body: Record<string, unknown>): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(FIRECRAWL_SEARCH_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${firecrawlApiKey()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ignoreInvalidURLs: true, country: 'US', ...body }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function firecrawlSearch(body: Record<string, unknown>): Promise<FirecrawlResponse> {
-  const res = await fetch(FIRECRAWL_SEARCH_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${firecrawlApiKey()}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await firecrawlFetch(body);
+  } catch (e) {
+    console.error('[Firecrawl] Fetch failed:', (e as Error).message);
+    return { success: false, data: {} };
+  }
+
+  // Retry once on rate limit
+  if (res.status === 429) {
+    console.warn(`[Firecrawl] Rate limited, retrying in ${RETRY_DELAY_MS}ms`);
+    await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+    try {
+      res = await firecrawlFetch(body);
+    } catch (e) {
+      console.error('[Firecrawl] Retry fetch failed:', (e as Error).message);
+      return { success: false, data: {} };
+    }
+  }
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -169,20 +201,22 @@ async function firecrawlSearch(body: Record<string, unknown>): Promise<Firecrawl
     console.error('[Firecrawl] API error:', JSON.stringify(json).slice(0, 300));
     return { success: false, data: {} };
   }
-  console.log('[Firecrawl] Success:', (json.data.web?.length ?? 0), 'web,', (json.data.news?.length ?? 0), 'news results');
+  const web = json.data.web?.length ?? 0;
+  const news = json.data.news?.length ?? 0;
+  console.log(`[Firecrawl] ${web} web, ${news} news (${json.creditsUsed ?? '?'} credits)`);
   return json;
 }
 
-function webResultToCard(result: FirecrawlWebResult, type: string): IntelCard {
+function webResultToCard(result: FirecrawlWebResult, type: IntelCardType): IntelCard {
   const description = result.description ?? '';
   const ogDesc = result.metadata?.ogDescription ?? '';
   const markdown = result.markdown ?? '';
   const prices = extractPrices(`${description} ${markdown}`);
   const hostname = getHostname(result.url);
-  const shortValue = ogDesc || description || markdown.slice(0, 200);
+  const shortValue = ogDesc || description || markdown.slice(0, 200) || result.title || 'No description available';
   const fullValue = (description && markdown)
     ? `${description}\n\n${markdown.slice(0, 400)}`
-    : markdown.slice(0, 600) || description;
+    : markdown.slice(0, 600) || description || shortValue;
 
   return {
     id: `${type}-${simpleHash(result.url)}`,
@@ -205,11 +239,11 @@ function newsResultToCard(result: FirecrawlNewsResult): IntelCard {
   const hostname = getHostname(result.url);
   const markdown = result.markdown ?? '';
   const snippet = result.snippet ?? '';
-  const shortValue = snippet || markdown.slice(0, 200);
-  const fullValue = markdown.slice(0, 600) || snippet;
+  const shortValue = snippet || markdown.slice(0, 200) || result.title || 'No description available';
+  const fullValue = markdown.slice(0, 600) || snippet || shortValue;
 
   return {
-    id: `warning-${simpleHash(result.url)}`,
+    id: `${INTEL_CARD_TYPES.WARNING}-${simpleHash(result.url)}`,
     type: INTEL_CARD_TYPES.WARNING,
     title: result.title ?? 'News',
     value: shortValue,
@@ -218,77 +252,78 @@ function newsResultToCard(result: FirecrawlNewsResult): IntelCard {
     source: hostname,
     sourceUrl: result.url,
     imageUrl: result.imageUrl ?? extractOgImage(result.metadata),
-    prices: [],
+    prices: extractPrices(`${snippet} ${markdown}`),
     siteName: result.metadata?.ogSiteName ?? undefined,
     faviconUrl: getFaviconUrl(hostname),
     date: result.date,
   };
 }
 
+// ── Plain helpers (callable directly from httpActions without action-from-action overhead) ──
+
+export async function doSearchMarket(query: string): Promise<IntelCard[]> {
+  try {
+    const response = await firecrawlSearch({
+      query,
+      limit: FIRECRAWL_SEARCH_LIMIT,
+      sources: [{ type: 'web' }],
+      scrapeOptions: SCRAPE_OPTIONS,
+    });
+    return (response.data.web ?? []).map((r) => webResultToCard(r, INTEL_CARD_TYPES.PRICE));
+  } catch {
+    return [];
+  }
+}
+
+export async function doSearchNews(query: string): Promise<IntelCard[]> {
+  try {
+    const response = await firecrawlSearch({
+      query,
+      limit: FIRECRAWL_SEARCH_LIMIT,
+      sources: [{ type: 'news' }, { type: 'web' }],
+      tbs: 'qdr:m,sbd:1',
+      scrapeOptions: SCRAPE_OPTIONS_LIGHT,
+    });
+    const newsResults = response.data.news ?? [];
+    if (newsResults.length > 0) return newsResults.map(newsResultToCard);
+    return (response.data.web ?? []).map((r) => webResultToCard(r, INTEL_CARD_TYPES.WARNING));
+  } catch {
+    return [];
+  }
+}
+
+export async function doSearchAlternatives(query: string, location?: string): Promise<IntelCard[]> {
+  try {
+    const body: Record<string, unknown> = {
+      query,
+      limit: FIRECRAWL_SEARCH_LIMIT,
+      sources: [{ type: 'web' }],
+      scrapeOptions: SCRAPE_OPTIONS_LIGHT,
+    };
+    if (location) body.location = location;
+    const response = await firecrawlSearch(body);
+    return (response.data.web ?? []).map((r) => webResultToCard(r, INTEL_CARD_TYPES.ALTERNATIVE));
+  } catch {
+    return [];
+  }
+}
+
+// ── InternalAction wrappers (for scheduling from mutations) ──
+
 export const searchMarket = internalAction({
   args: { query: v.string() },
-  handler: async (_ctx, { query }): Promise<IntelCard[]> => {
-    try {
-      const response = await firecrawlSearch({
-        query,
-        limit: FIRECRAWL_SEARCH_LIMIT,
-        sources: [{ type: 'web' }],
-        scrapeOptions: SCRAPE_OPTIONS,
-      });
-      const results = response.data.web ?? [];
-      return results.map((r) => webResultToCard(r, INTEL_CARD_TYPES.PRICE));
-    } catch {
-      return [];
-    }
-  },
+  returns: v.array(intelCardValidator),
+  handler: async (_ctx, { query }) => doSearchMarket(query),
 });
 
 export const searchNews = internalAction({
   args: { query: v.string() },
-  handler: async (_ctx, { query }): Promise<IntelCard[]> => {
-    try {
-      const response = await firecrawlSearch({
-        query,
-        limit: FIRECRAWL_SEARCH_LIMIT,
-        sources: [{ type: 'news' }],
-        scrapeOptions: SCRAPE_OPTIONS,
-      });
-      const newsResults = response.data.news ?? [];
-      if (newsResults.length > 0) {
-        return newsResults.map(newsResultToCard);
-      }
-      // Fallback to web search with time filter if no news results
-      const webResponse = await firecrawlSearch({
-        query,
-        limit: FIRECRAWL_SEARCH_LIMIT,
-        sources: [{ type: 'web', tbs: 'qdr:m' }],
-        scrapeOptions: SCRAPE_OPTIONS,
-      });
-      const webResults = webResponse.data.web ?? [];
-      return webResults.map((r) => webResultToCard(r, INTEL_CARD_TYPES.WARNING));
-    } catch {
-      return [];
-    }
-  },
+  returns: v.array(intelCardValidator),
+  handler: async (_ctx, { query }) => doSearchNews(query),
 });
 
 export const searchAlternatives = internalAction({
   args: { query: v.string(), location: v.optional(v.string()) },
-  handler: async (_ctx, { query, location }): Promise<IntelCard[]> => {
-    try {
-      const body: Record<string, unknown> = {
-        query,
-        limit: FIRECRAWL_SEARCH_LIMIT,
-        sources: [{ type: 'web', location: location ?? undefined }],
-        scrapeOptions: SCRAPE_OPTIONS,
-      };
-      if (location) body.location = location;
-
-      const response = await firecrawlSearch(body);
-      const results = response.data.web ?? [];
-      return results.map((r) => webResultToCard(r, INTEL_CARD_TYPES.ALTERNATIVE));
-    } catch {
-      return [];
-    }
-  },
+  returns: v.array(intelCardValidator),
+  handler: async (_ctx, { query, location }) => doSearchAlternatives(query, location),
 });

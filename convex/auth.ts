@@ -10,7 +10,6 @@ import { query } from './_generated/server';
 import authConfig from './auth.config';
 import { sendOTPVerification, sendResetPassword } from './email';
 import { env } from './env';
-
 export const authComponent = createClient<DataModel>(components.betterAuth);
 const ONE_MINUTE = 60;
 const ONE_HOUR = 60 * 60;
@@ -67,11 +66,10 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => betterAuth({
   ],
 } satisfies BetterAuthOptions);
 
+// Uses raw query: reads from Better Auth component table, not app tables (no RLS needed)
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) return null;
-    return user;
+    return (await authComponent.safeGetAuthUser(ctx)) ?? null;
   },
 });

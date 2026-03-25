@@ -13,11 +13,12 @@ function ownerRules(field = 'userId') {
 
 export const rules: Rules<RLSCtx, DataModel> = {
   searchCache: {
-    // Cache is shared across users for same query hash; readable by anyone authenticated
-    read: async ({ user }) => user !== '',
-    modify: async ({ user }) => user !== '',
-    insert: async ({ user }) => user !== '',
+    read: async () => false,
+    modify: async () => false,
+    insert: async () => false,
   },
   sessions: ownerRules(),
+  sessionLeverage: ownerRules(),
+  messages: ownerRules(),
   conversations: ownerRules(),
 };

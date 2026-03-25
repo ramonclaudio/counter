@@ -4,7 +4,8 @@ import { internal } from './_generated/api';
 import { authComponent, createAuth } from './auth';
 import { resend } from './email';
 import { webhookSecret, elevenlabsApiKey, elevenlabsAgentId, elevenlabsWebhookSecret } from './env';
-import { SEARCH_TYPES } from './constants';
+import { SEARCH_TYPES, type SearchType } from './constants';
+import { doSearchMarket, doSearchNews, doSearchAlternatives } from './firecrawl';
 
 const http = httpRouter();
 
@@ -50,18 +51,20 @@ http.route({
 http.route({
   path: '/privacy',
   method: 'GET',
-  handler: httpAction(async () => {
-    return new Response(null, { status: 301, headers: { Location: privacyUrl } });
-  }),
+  handler: httpAction(async () =>
+    new Response(null, { status: 301, headers: { Location: privacyUrl } }),
+  ),
 });
 
 http.route({
   path: '/terms',
   method: 'GET',
-  handler: httpAction(async () => {
-    return new Response(null, { status: 301, headers: { Location: termsUrl } });
-  }),
+  handler: httpAction(async () =>
+    new Response(null, { status: 301, headers: { Location: termsUrl } }),
+  ),
 });
+
+// ── Helpers ──────────────────────────────────────────────────────────────
 
 function validateWebhookSecret(req: Request): Response | null {
   const auth = req.headers.get('Authorization');
@@ -81,94 +84,90 @@ function jsonResponse(data: unknown, status = 200): Response {
   });
 }
 
-http.route({
-  path: '/searchMarket',
-  method: 'POST',
-  handler: httpAction(async (ctx, req) => {
+// ── Search endpoints (called by ElevenLabs agent tools) ─────────────────
+// Calls plain helper functions directly (no action-from-action overhead).
+
+import type { Infer } from 'convex/values';
+import { intelCardValidator } from './constants';
+
+type IntelCard = Infer<typeof intelCardValidator>;
+type SearchFn = (query: string, location?: string) => Promise<IntelCard[]>;
+
+function searchRoute(
+  searchType: SearchType,
+  searchFn: SearchFn,
+  getExtra?: (body: Record<string, unknown>) => string | undefined,
+) {
+  return httpAction(async (ctx, req) => {
     const authError = validateWebhookSecret(req);
     if (authError) return authError;
 
-    const body = (await req.json()) as { query?: string };
-    const query = body.query?.trim();
+    const body = (await req.json()) as Record<string, unknown>;
+    const query = (body.query as string | undefined)?.trim();
     if (!query) return jsonResponse({ error: 'query is required' }, 400);
 
-    const cached = await ctx.runQuery(internal.cache.getCached, { query, searchType: SEARCH_TYPES.MARKET });
+    const extra = getExtra?.(body);
+    const now = Date.now();
+
+    const cached = await ctx.runQuery(internal.cache.getCached, { query, searchType, extra, now });
     if (cached) return jsonResponse({ results: cached });
 
-    const results = await ctx.runAction(internal.firecrawl.searchMarket, { query });
-    await ctx.runMutation(internal.cache.setCached, { query, searchType: SEARCH_TYPES.MARKET, results });
+    const results = await searchFn(query, extra);
+    await ctx.runMutation(internal.cache.setCached, { query, searchType, results });
 
     return jsonResponse({ results });
-  }),
+  });
+}
+
+http.route({
+  path: '/searchMarket',
+  method: 'POST',
+  handler: searchRoute(SEARCH_TYPES.MARKET, doSearchMarket),
 });
 
 http.route({
   path: '/searchNews',
   method: 'POST',
-  handler: httpAction(async (ctx, req) => {
-    const authError = validateWebhookSecret(req);
-    if (authError) return authError;
-
-    const body = (await req.json()) as { query?: string };
-    const query = body.query?.trim();
-    if (!query) return jsonResponse({ error: 'query is required' }, 400);
-
-    const cached = await ctx.runQuery(internal.cache.getCached, { query, searchType: SEARCH_TYPES.NEWS });
-    if (cached) return jsonResponse({ results: cached });
-
-    const results = await ctx.runAction(internal.firecrawl.searchNews, { query });
-    await ctx.runMutation(internal.cache.setCached, { query, searchType: SEARCH_TYPES.NEWS, results });
-
-    return jsonResponse({ results });
-  }),
+  handler: searchRoute(SEARCH_TYPES.NEWS, doSearchNews),
 });
 
 http.route({
   path: '/searchAlternatives',
   method: 'POST',
-  handler: httpAction(async (ctx, req) => {
-    const authError = validateWebhookSecret(req);
-    if (authError) return authError;
-
-    const body = (await req.json()) as { query?: string; location?: string };
-    const query = body.query?.trim();
-    if (!query) return jsonResponse({ error: 'query is required' }, 400);
-
-    const cached = await ctx.runQuery(internal.cache.getCached, { query, searchType: SEARCH_TYPES.ALTERNATIVES });
-    if (cached) return jsonResponse({ results: cached });
-
-    const results = await ctx.runAction(internal.firecrawl.searchAlternatives, { query, location: body.location });
-    await ctx.runMutation(internal.cache.setCached, { query, searchType: SEARCH_TYPES.ALTERNATIVES, results });
-
-    return jsonResponse({ results });
-  }),
+  handler: searchRoute(
+    SEARCH_TYPES.ALTERNATIVES,
+    doSearchAlternatives,
+    (body) => (body.location as string | undefined)?.trim() || undefined,
+  ),
 });
 
-// ElevenLabs post-call webhook: saves transcript summary to conversation record
+// ── ElevenLabs post-call webhook ────────────────────────────────────────
+
+type ElevenLabsWebhookBody = {
+  type?: string;
+  data?: {
+    conversation_id?: string;
+    agent_id?: string;
+    call_duration_secs?: number;
+    analysis?: {
+      call_successful?: string;
+      transcript_summary?: string;
+      evaluation_criteria_results?: Record<string, { result: string; rationale: string }>;
+      data_collection_results?: Record<string, { value: string | number | boolean | null; rationale: string }>;
+    };
+  };
+};
+
 http.route({
   path: '/elevenlabs-webhook',
   method: 'POST',
   handler: httpAction(async (ctx, req) => {
-    // Verify webhook signature (ElevenLabs sends the secret as a bearer token in the header)
     const sig = req.headers.get('elevenlabs-signature') ?? req.headers.get('authorization');
     const secret = elevenlabsWebhookSecret();
     if (!sig || (!sig.includes(secret) && sig !== `Bearer ${secret}`)) {
       return jsonResponse({ error: 'Invalid signature' }, 401);
     }
-    const body = await req.json() as {
-      type?: string;
-      data?: {
-        conversation_id?: string;
-        agent_id?: string;
-        call_duration_secs?: number;
-        analysis?: {
-          call_successful?: string;
-          transcript_summary?: string;
-          evaluation_criteria_results?: Record<string, { result: string; rationale: string }>;
-          data_collection_results?: Record<string, { value: unknown; rationale: string }>;
-        };
-      };
-    };
+    const body = (await req.json()) as ElevenLabsWebhookBody;
     if (body.type !== 'post_call_transcription' || !body.data?.conversation_id) {
       return jsonResponse({ ok: true });
     }
@@ -185,22 +184,33 @@ http.route({
   }),
 });
 
+// ── ElevenLabs token (called by Expo app) ───────────────────────────────
+
 http.route({
   path: '/getToken',
   method: 'POST',
   handler: httpAction(async (_ctx, req) => {
-    // Called by the Expo app directly (no webhook secret needed, but could add later)
-    const res = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${elevenlabsAgentId()}`,
-      { headers: { 'xi-api-key': elevenlabsApiKey() } },
-    );
+    const authError = validateWebhookSecret(req);
+    if (authError) return authError;
 
-    if (!res.ok) {
-      return jsonResponse({ error: 'Failed to get token' }, 502);
+    try {
+      const res = await fetch(
+        `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${elevenlabsAgentId()}`,
+        { headers: { 'xi-api-key': elevenlabsApiKey() } },
+      );
+
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        console.error(`ElevenLabs token error: ${res.status} ${body}`);
+        return jsonResponse({ error: 'Failed to get token' }, 502);
+      }
+
+      const data = (await res.json()) as { token: string };
+      return jsonResponse({ conversationToken: data.token });
+    } catch (e) {
+      console.error('ElevenLabs token fetch failed:', e);
+      return jsonResponse({ error: 'Token service unavailable' }, 503);
     }
-
-    const data = (await res.json()) as { token: string };
-    return jsonResponse({ conversationToken: data.token });
   }),
 });
 
