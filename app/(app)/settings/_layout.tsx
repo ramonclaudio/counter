@@ -1,4 +1,3 @@
-import { View } from 'react-native';
 import { Stack } from 'expo-router';
 
 import { useColors } from '@/hooks/use-theme';
@@ -11,7 +10,7 @@ export default function DashboardLayout() {
     <Stack
       screenOptions={{
         headerShown: true,
-        headerBackground: () => <View style={{ flex: 1, backgroundColor: colors.background }} />,
+        headerStyle: { backgroundColor: colors.background as string },
         headerTintColor: HeaderTint as string,
         headerTitleStyle: { color: HeaderTint as string },
         headerShadowVisible: false,
@@ -21,12 +20,9 @@ export default function DashboardLayout() {
         name="index"
         options={{ headerShown: false }}
       />
-      <Stack.Screen name="preferences" options={{ title: 'Settings', headerBackTitle: 'Profile' }} />
-      <Stack.Screen name="notifications" options={{ title: 'Notifications', headerBackTitle: 'Settings' }} />
       <Stack.Screen name="privacy" options={{ title: 'Privacy', headerBackTitle: 'Settings' }} />
       <Stack.Screen name="about" options={{ title: 'About', headerBackTitle: 'Settings' }} />
       <Stack.Screen name="help" options={{ title: 'Help', headerBackTitle: 'Settings' }} />
-      <Stack.Screen name="blocked-users" options={{ title: 'Blocked Users', headerBackTitle: 'Settings' }} />
     </Stack>
   );
 }
