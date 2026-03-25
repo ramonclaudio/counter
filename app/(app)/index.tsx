@@ -510,7 +510,7 @@ export default function ConversationScreen() {
             feed={lastSessionFeed}
             onNewSession={() => { dismissSession(); handleStart(); }}
             onDismiss={dismissSession}
-            onFollowUp={(q) => { const ctx = buildSessionContext(lastSessionFeed, q); dismissSession(); handleStart({ context: ctx }); }}
+            onFollowUp={(q) => { const ctx = buildSessionContext(lastSessionFeed, q); dismissSession(); handleStart({ context: ctx, firstMessage: q }); }}
             onFeedback={canSendFeedback ? (liked: boolean) => {
               sendFeedback(liked);
               if (liked && !reviewRequested.current) {
