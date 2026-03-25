@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, TextInput, Pressable, KeyboardAvoidingView, ScrollView } from "react-native";
+import { View, TextInput, Pressable, ScrollView } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Link, router, useLocalSearchParams } from "expo-router";
 
 import { authClient } from "@/lib/auth-client";
@@ -106,7 +107,6 @@ export default function ResetPasswordScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior="padding"
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <ScrollView
@@ -147,6 +147,7 @@ export default function ResetPasswordScreen() {
                   color: colors.foreground,
                   borderColor: error ? colors.destructive : colors.border,
                 },
+                isLoading && { opacity: 0.5 },
               ]}
               placeholder="At least 10 characters"
               placeholderTextColor={colors.mutedForeground}
@@ -155,6 +156,7 @@ export default function ResetPasswordScreen() {
                 setPassword(text);
                 setError(null);
               }}
+              editable={!isLoading}
               secureTextEntry
               autoComplete="password-new"
               accessibilityLabel="New password"
@@ -172,6 +174,7 @@ export default function ResetPasswordScreen() {
                   color: colors.foreground,
                   borderColor: error ? colors.destructive : colors.border,
                 },
+                isLoading && { opacity: 0.5 },
               ]}
               placeholder="Re-enter your password"
               placeholderTextColor={colors.mutedForeground}
@@ -180,6 +183,7 @@ export default function ResetPasswordScreen() {
                 setConfirmPassword(text);
                 setError(null);
               }}
+              editable={!isLoading}
               secureTextEntry
               autoComplete="password-new"
               accessibilityLabel="Confirm password"

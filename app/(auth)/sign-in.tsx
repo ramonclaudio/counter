@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, TextInput, Pressable, KeyboardAvoidingView, ScrollView } from "react-native";
+import { View, TextInput, Pressable, ScrollView } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Link } from "expo-router";
 
 import { authClient, signInWithUsername } from "@/lib/auth-client";
@@ -52,7 +53,6 @@ export default function SignInScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior="padding"
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <ScrollView
@@ -80,6 +80,7 @@ export default function SignInScreen() {
                   color: colors.foreground,
                   borderColor: error ? colors.destructive : colors.border,
                 },
+                isLoading && { opacity: 0.5 },
               ]}
               placeholder="you@example.com or username"
               placeholderTextColor={colors.mutedForeground}
@@ -88,6 +89,7 @@ export default function SignInScreen() {
                 setIdentifier(text);
                 setError(null);
               }}
+              editable={!isLoading}
               autoCapitalize="none"
               autoComplete="username"
               autoCorrect={false}
@@ -118,6 +120,7 @@ export default function SignInScreen() {
                   color: colors.foreground,
                   borderColor: error ? colors.destructive : colors.border,
                 },
+                isLoading && { opacity: 0.5 },
               ]}
               placeholder="Enter your password"
               placeholderTextColor={colors.mutedForeground}
@@ -126,6 +129,7 @@ export default function SignInScreen() {
                 setPassword(text);
                 setError(null);
               }}
+              editable={!isLoading}
               secureTextEntry
               autoComplete="password"
               accessibilityLabel="Password"

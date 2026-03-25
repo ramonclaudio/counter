@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, TextInput, Pressable, KeyboardAvoidingView, ScrollView } from "react-native";
+import { View, TextInput, Pressable, ScrollView } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Link, router } from "expo-router";
 
 import { authClient } from "@/lib/auth-client";
@@ -75,7 +76,6 @@ export default function ForgotPasswordScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior="padding"
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <ScrollView
@@ -103,6 +103,7 @@ export default function ForgotPasswordScreen() {
                   color: colors.foreground,
                   borderColor: error ? colors.destructive : colors.border,
                 },
+                isLoading && { opacity: 0.5 },
               ]}
               placeholder="you@example.com"
               placeholderTextColor={colors.mutedForeground}
@@ -111,6 +112,7 @@ export default function ForgotPasswordScreen() {
                 setEmail(text);
                 setError(null);
               }}
+              editable={!isLoading}
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"

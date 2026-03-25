@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, TextInput, Pressable, KeyboardAvoidingView, ScrollView } from "react-native";
+import { View, TextInput, Pressable, ScrollView } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Link } from "expo-router";
 
 import { authClient } from "@/lib/auth-client";
@@ -86,7 +87,6 @@ export default function SignUpScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior="padding"
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <ScrollView
@@ -114,6 +114,7 @@ export default function SignUpScreen() {
                   color: colors.foreground,
                   borderColor: colors.border,
                 },
+                isLoading && { opacity: 0.5 },
               ]}
               placeholder="Your name"
               placeholderTextColor={colors.mutedForeground}
@@ -122,6 +123,7 @@ export default function SignUpScreen() {
                 setName(text);
                 setError(null);
               }}
+              editable={!isLoading}
               autoComplete="name"
               accessibilityLabel="Name"
               accessibilityHint="Enter your full name"
@@ -138,6 +140,7 @@ export default function SignUpScreen() {
                   color: colors.foreground,
                   borderColor: colors.border,
                 },
+                isLoading && { opacity: 0.5 },
               ]}
               placeholder="3-20 characters"
               placeholderTextColor={colors.mutedForeground}
@@ -146,6 +149,7 @@ export default function SignUpScreen() {
                 setUsername(text);
                 setError(null);
               }}
+              editable={!isLoading}
               autoCapitalize="none"
               autoComplete="username-new"
               autoCorrect={false}
@@ -164,6 +168,7 @@ export default function SignUpScreen() {
                   color: colors.foreground,
                   borderColor: colors.border,
                 },
+                isLoading && { opacity: 0.5 },
               ]}
               placeholder="you@example.com"
               placeholderTextColor={colors.mutedForeground}
@@ -172,6 +177,7 @@ export default function SignUpScreen() {
                 setEmail(text);
                 setError(null);
               }}
+              editable={!isLoading}
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
@@ -190,6 +196,7 @@ export default function SignUpScreen() {
                   color: colors.foreground,
                   borderColor: colors.border,
                 },
+                isLoading && { opacity: 0.5 },
               ]}
               placeholder="At least 10 characters"
               placeholderTextColor={colors.mutedForeground}
@@ -198,6 +205,7 @@ export default function SignUpScreen() {
                 setPassword(text);
                 setError(null);
               }}
+              editable={!isLoading}
               secureTextEntry
               autoComplete="password-new"
               accessibilityLabel="Password"
