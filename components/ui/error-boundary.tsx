@@ -3,7 +3,7 @@ import { View, Pressable, Text } from 'react-native';
 import { router, type ErrorBoundaryProps } from 'expo-router';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Spacing, TouchTarget } from '@/constants/layout';
+import { Spacing, TouchTarget, FontSize, FontFamily } from '@/constants/layout';
 import { Colors, Radius } from '@/constants/theme';
 
 export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
@@ -41,9 +41,9 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
       </View>
       <Text
         style={{
-          fontSize: 26,
+          fontSize: FontSize["6xl"],
           lineHeight: 32,
-          fontWeight: '700',
+          fontFamily: FontFamily.bold,
           textAlign: 'center',
           color: Colors.foreground,
           letterSpacing: -0.5,
@@ -53,8 +53,9 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
       </Text>
       <Text
         style={{
-          fontSize: 15,
+          fontSize: FontSize.lg,
           lineHeight: 22,
+          fontFamily: FontFamily.regular,
           textAlign: 'center',
           color: Colors.systemGray,
           marginBottom: Spacing.md,
@@ -85,8 +86,8 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
       >
         <Text
           style={{
-            fontSize: 16,
-            fontWeight: '700',
+            fontSize: FontSize.xl,
+            fontFamily: FontFamily.bold,
             color: Colors.primaryForeground,
             letterSpacing: 0.3,
           }}
@@ -106,8 +107,8 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
       >
         <Text
           style={{
-            fontSize: 14,
-            fontWeight: '500',
+            fontSize: FontSize.base,
+            fontFamily: FontFamily.medium,
             color: Colors.systemGray,
           }}
         >

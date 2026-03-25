@@ -5,7 +5,7 @@ import { authClient } from "@/lib/auth-client";
 import { haptics } from "@/lib/haptics";
 import { useColors } from "@/hooks/use-theme";
 import { authStyles as styles } from "@/lib/auth-styles";
-import { Spacing, IconSize } from "@/constants/layout";
+import { Spacing, IconSize, FontFamily } from "@/constants/layout";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ThemedText } from "@/components/ui/themed-text";
 import { ErrorBanner } from "@/components/auth/error-banner";
@@ -95,7 +95,7 @@ export function OtpVerification({ email, password, onBack }: OtpVerificationProp
           color={colors.mutedForeground}
         >
           Enter the 6-digit code sent to{"\n"}
-          <ThemedText style={{ fontWeight: "600" }}>{email}</ThemedText>
+          <ThemedText style={{ fontFamily: FontFamily.semiBold }}>{email}</ThemedText>
         </ThemedText>
       </View>
 
@@ -111,6 +111,7 @@ export function OtpVerification({ email, password, onBack }: OtpVerificationProp
               borderColor: colors.border,
               textAlign: "center",
               fontSize: 24,
+              fontFamily: FontFamily.mono,
               letterSpacing: 8,
               fontVariant: ["tabular-nums"],
             },

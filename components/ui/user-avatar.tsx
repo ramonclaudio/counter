@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { ThemedText } from "@/components/ui/themed-text";
 import { Opacity } from "@/constants/ui";
 import { useColors } from "@/hooks/use-theme";
+import { FontFamily } from "@/constants/layout";
 
 export function UserAvatar({ size = 36 }: { size?: number }) {
   const colors = useColors();
@@ -48,7 +49,7 @@ export function UserAvatar({ size = 36 }: { size?: number }) {
           }}
         >
           <ThemedText
-            style={{ fontSize: size * 0.42, fontWeight: "700" }}
+            style={{ fontSize: size * 0.42, fontFamily: FontFamily.bold }}
             color={colors.primary}
           >
             {initial}
