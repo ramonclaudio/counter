@@ -28,13 +28,22 @@
         "NSPrivacyAccessedAPITypes": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
           }
         ]
       }
     },
     "plugins": [
-      ["expo-router", { "asyncRoutes": { "default": "development" } }],
+      [
+        "expo-router",
+        {
+          "asyncRoutes": {
+            "default": "development"
+          }
+        }
+      ],
       "expo-splash-screen",
       "expo-secure-store",
       "expo-web-browser",
@@ -54,9 +63,13 @@
       "policy": "appVersion"
     },
     "extra": {
-      "router": {},
+      "router": {
+        "asyncRoutes": {
+          "default": "development"
+        }
+      },
       "eas": {
-        "projectId": "27495040-f0ab-4f2f-b207-72a0dbc118b6"
+        "projectId": "a273e2b0-3090-4e71-b663-9123433e0423"
       }
     },
     "owner": "ramonclaudio"
