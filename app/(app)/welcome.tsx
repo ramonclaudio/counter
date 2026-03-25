@@ -63,14 +63,14 @@ export default function WelcomeScreen() {
         </Animated.View>
 
         <Animated.View style={[styles.textWrap, titleStyle]}>
-          <Text style={styles.title}>Meet Counter</Text>
+          <Text style={styles.title} accessibilityRole="header">Meet Counter</Text>
           <Text style={styles.subtitle}>
             I research deals while you talk. Prices, alternatives, warnings, and
             negotiation leverage, all in real time.
           </Text>
         </Animated.View>
 
-        <Animated.View style={[styles.features, titleStyle]}>
+        <Animated.View style={[styles.features, titleStyle]} accessibilityRole="summary" accessibilityLabel="Key features">
           <View style={styles.featureRow}>
             <IconSymbol
               name="mic.fill"

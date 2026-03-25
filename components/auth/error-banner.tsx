@@ -15,7 +15,7 @@ export function ErrorBanner({ message, children }: ErrorBannerProps) {
   if (!message) return null;
   const s = getErrorStyles(colors);
   return (
-    <View style={s.container}>
+    <View accessibilityLiveRegion="assertive" accessibilityRole="alert" style={s.container}>
       <ThemedText selectable style={s.text}>
         {message}
       </ThemedText>

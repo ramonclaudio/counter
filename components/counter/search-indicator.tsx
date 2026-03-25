@@ -56,7 +56,7 @@ export function SearchIndicator({ visible }: { visible: boolean }) {
   if (!visible) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} accessibilityLiveRegion="polite" accessibilityLabel="Searching the web for deal information">
       <View style={styles.badge}>
         <View style={styles.dots}>
           <Dot delay={0} />

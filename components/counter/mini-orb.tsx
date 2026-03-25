@@ -94,7 +94,7 @@ export function MiniOrb({ isSpeaking, isConnected, isSearching, phase }: { isSpe
   const shadowColor = isSearching ? SEARCH_COLOR : baseColor;
 
   return (
-    <View style={s.container}>
+    <View style={s.container} accessibilityLabel="Connection status" accessible={false}>
       {isSearching && Array.from({ length: DOT_COUNT }).map((_, i) => <MiniOrbDot key={i} index={i} total={DOT_COUNT} rotate={dotRotate} />)}
       <Animated.View style={[s.ring, ringStyle, { borderColor: ringColor }]} />
       <Animated.View style={[s.orb, orbStyle, orbColor, { shadowColor }]} />

@@ -118,12 +118,13 @@ export function IntelCard({ card }: Props) {
                 placeholderContentFit="cover"
                 cachePolicy="memory-disk"
                 onError={() => setImageError(true)}
+                accessibilityLabel={card.title}
               />
               <View style={styles.imageScrim} />
               {/* Source on image */}
               <View style={styles.imageSource}>
                 {hasFavicon && (
-                  <Image source={{ uri: card.faviconUrl }} style={styles.faviconSmall} contentFit="contain" cachePolicy="memory-disk" />
+                  <Image source={{ uri: card.faviconUrl }} style={styles.faviconSmall} contentFit="contain" cachePolicy="memory-disk" accessible={false} />
                 )}
                 <Text style={styles.imageSourceText} numberOfLines={1}>{card.siteName ?? card.source}</Text>
                 {hasDate && <Text style={styles.imageDateText}>{relativeTime(card.date!)}</Text>}
@@ -144,7 +145,7 @@ export function IntelCard({ card }: Props) {
                   accessibilityLabel={`Source: ${card.siteName ?? card.source}`}
                 >
                   {hasFavicon && (
-                    <Image source={{ uri: card.faviconUrl }} style={styles.favicon} contentFit="contain" cachePolicy="memory-disk" />
+                    <Image source={{ uri: card.faviconUrl }} style={styles.favicon} contentFit="contain" cachePolicy="memory-disk" accessible={false} />
                   )}
                   <Text style={styles.sourceName} numberOfLines={1}>{card.siteName ?? card.source}</Text>
                   {hasDate && <Text style={styles.dateText}>{relativeTime(card.date!)}</Text>}
@@ -207,7 +208,10 @@ export function IntelCard({ card }: Props) {
 
             {/* Source URL expanded */}
             {expanded && card.sourceUrl && (
-              <Pressable onPress={handleSourcePress} hitSlop={8}>
+              <Pressable onPress={handleSourcePress} hitSlop={8}
+                accessibilityRole="link"
+                accessibilityLabel={`Open source: ${card.siteName ?? card.source}`}
+              >
                 <Text style={styles.sourceUrl} numberOfLines={1}>{card.sourceUrl}</Text>
               </Pressable>
             )}

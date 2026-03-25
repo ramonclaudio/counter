@@ -19,9 +19,7 @@ export default function AppLayout() {
           contentStyle: { backgroundColor: colors.background },
           headerBackTitle: "Back",
           headerTintColor: HeaderTint as string,
-          headerBackground: () => (
-            <View style={{ flex: 1, backgroundColor: colors.background }} />
-          ),
+          headerStyle: { backgroundColor: colors.background as string },
           headerShadowVisible: false,
           animation: "slide_from_right",
           animationDuration: 300,

@@ -57,6 +57,9 @@ function FilterChip(
   return (
     <Pressable
       onPress={() => { haptics.light(); onPress(); }}
+      accessibilityRole="button"
+      accessibilityLabel={`Filter by ${label.toLowerCase()}`}
+      accessibilityState={{ selected: active }}
       style={[
         s.filterChip,
         active
@@ -107,7 +110,7 @@ function IntelSection({ item }: { item: Extract<FeedItem, { type: "intel" }> }) 
           {sources.slice(0, 5).map((src) => (
             <View key={src.name} style={s.sourceChip}>
               {src.favicon && (
-                <Image source={{ uri: src.favicon }} style={s.sourceFavicon} contentFit="contain" cachePolicy="memory-disk" />
+                <Image source={{ uri: src.favicon }} style={s.sourceFavicon} contentFit="contain" cachePolicy="memory-disk" accessible={false} />
               )}
               <Text style={s.sourceName} numberOfLines={1}>{src.name}</Text>
             </View>
