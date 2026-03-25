@@ -1,0 +1,32 @@
+<svg id="d-splash-img-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1284 2778" width="1284" height="2778">
+  <defs>
+    <radialGradient id="dsi-glow" cx="50%" cy="42%" r="28%">
+      <stop offset="0%" stop-color="#D9960F" stop-opacity="0.18"/>
+      <stop offset="50%" stop-color="#D9960F" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#D9960F" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="dsi-orb" cx="50%" cy="44%" r="50%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="18%" stop-color="#F7C948"/>
+      <stop offset="42%" stop-color="#D9960F"/>
+      <stop offset="68%" stop-color="#92630A"/>
+      <stop offset="100%" stop-color="#3D2E0A"/>
+    </radialGradient>
+    <radialGradient id="dsi-core" cx="50%" cy="46%" r="20%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="35%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FDE68A" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="dsi-hl" cx="44%" cy="40%" r="22%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="642" cy="1200" r="500" fill="url(#dsi-glow)"/>
+  <circle cx="642" cy="1200" r="340" fill="none" stroke="#D9960F" stroke-width="4" stroke-opacity="0.18"/>
+  <circle cx="642" cy="1200" r="260" fill="none" stroke="#D9960F" stroke-width="5" stroke-opacity="0.3"/>
+  <circle cx="642" cy="1200" r="260" fill="none" stroke="#F0B429" stroke-width="1.5" stroke-opacity="0.15"/>
+  <circle cx="642" cy="1200" r="180" fill="url(#dsi-orb)"/>
+  <circle cx="642" cy="1180" r="48" fill="url(#dsi-core)"/>
+  <ellipse cx="618" cy="1155" rx="55" ry="40" fill="url(#dsi-hl)"/>
+</svg>

@@ -141,8 +141,22 @@ export function useCounter() {
       clearInterval(keepaliveRef.current);
     },
     onError: (message) => {
+      const msg = typeof message === "string" ? message : "";
+      const isTransient =
+        msg.includes("connection") ||
+        msg.includes("websocket") ||
+        msg.includes("network") ||
+        msg.includes("timeout") ||
+        msg.includes("reset") ||
+        msg === "" ||
+        msg === "Connection error";
+      if (isTransient) {
+        // LiveKit handles reconnection internally, don't surface transport noise
+        if (__DEV__) console.warn("[Counter] Transient error (suppressed):", message);
+        return;
+      }
       console.error("[Counter] Error:", message);
-      setError(typeof message === "string" ? message : "Connection error");
+      setError(msg || "Connection error");
       clearSearchTimeout();
       setIsSearching(false);
     },
