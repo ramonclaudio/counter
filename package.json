@@ -22,6 +22,8 @@
     "@convex-dev/better-auth": "^0.11.3",
     "@convex-dev/resend": "^0.2.3",
     "@elevenlabs/react-native": "^0.5.12",
+    "@expo-google-fonts/geist": "^0.4.1",
+    "@expo-google-fonts/geist-mono": "^0.4.1",
     "@expo/ui": "56.0.0-canary-20260305-5163746",
     "@livekit/react-native": "^2.9.6",
     "@livekit/react-native-expo-plugin": "^1.0.2",
