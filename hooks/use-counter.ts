@@ -57,28 +57,34 @@ export function useCounter() {
             highlightCount: c.highlights?.length ?? 0, priceCount: c.prices?.length ?? 0,
           }))));
         }
-        // Server generates deterministic IDs, fallback for agent-generated cards
         const cardsWithIds = cards.map((c, i) => ({
           ...c,
           id: c.id || `${c.type || 'card'}-${Date.now()}-${i}`,
         }));
+        // Stagger cards into the feed one at a time for perceived speed
+        const STAGGER_MS = 150;
+        for (let i = 0; i < cardsWithIds.length; i++) {
+          const card = cardsWithIds[i];
+          if (i > 0) await new Promise((r) => setTimeout(r, STAGGER_MS));
+          setIntelCards((prev) => {
+            if (prev.some((c) => c.id === card.id)) return prev;
+            return [...prev, card];
+          });
+          setFeedItems((prev) => [...prev, { type: 'intel', cards: [card], timestamp: Date.now() + i }]);
+          if (i === 0) haptics.success();
+        }
+        // Persist full set to Convex once
         setIntelCards((prev) => {
-          const existingIds = new Set(prev.map((c) => c.id));
-          const newCards = cardsWithIds.filter((c) => !existingIds.has(c.id));
-          const merged = [...prev, ...newCards];
-          // Persist to Convex
           if (convIdRef.current) {
             updateIntelCardsMutation({
               conversationId: convIdRef.current,
-              intelCards: merged,
+              intelCards: prev,
             }).catch((e) => console.warn('[Counter] Sync failed:', e));
           }
-          return merged;
+          return prev;
         });
-        setFeedItems((prev) => [...prev, { type: 'intel', cards: cardsWithIds, timestamp: Date.now() }]);
         clearSearchTimeout();
         setIsSearching(false);
-        haptics.success();
         return "Cards displayed";
       },
       setConversationPhase: async (params: unknown) => {
