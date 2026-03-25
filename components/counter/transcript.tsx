@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
+import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Colors, OnImage, Radius } from "@/constants/theme";
 import { Spacing, FontSize, LineHeight } from "@/constants/layout";
 import type { Message } from "@/lib/types";
@@ -14,11 +15,11 @@ function formatTime(ts: number): string {
 }
 
 export function Transcript({ messages }: Props) {
-  const scrollRef = useRef<ScrollView>(null);
+  const listRef = useRef<FlashListRef<Message>>(null);
 
   useEffect(() => {
     if (messages.length > 0) {
-      scrollRef.current?.scrollToEnd({ animated: true });
+      listRef.current?.scrollToEnd({ animated: true });
     }
   }, [messages.length]);
 
@@ -31,16 +32,13 @@ export function Transcript({ messages }: Props) {
   }
 
   return (
-    <ScrollView
-      ref={scrollRef}
-      style={styles.scroll}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {messages.map((msg, i) => {
+    <FlashList
+      ref={listRef}
+      data={messages}
+      renderItem={({ item: msg }) => {
         const isUser = msg.role === "user";
         return (
-          <View key={i} style={[styles.row, isUser ? styles.rowUser : styles.rowAssistant]}>
+          <View style={[styles.row, isUser ? styles.rowUser : styles.rowAssistant]} accessible accessibilityLabel={`${isUser ? "You" : "Counter"}: ${msg.content}`}>
             <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}>
               <Text style={[styles.text, isUser ? styles.textUser : styles.textAssistant]}>
                 {msg.content}
@@ -51,15 +49,15 @@ export function Transcript({ messages }: Props) {
             </View>
           </View>
         );
-      })}
-    </ScrollView>
+      }}
+      keyExtractor={(_, i) => String(i)}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-  },
   content: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,

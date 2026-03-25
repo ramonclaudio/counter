@@ -1,17 +1,18 @@
-import { useEffect } from "react";
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { useCallback, useEffect } from "react";
+import { View, Text, Pressable, Share, StyleSheet } from "react-native";
 import Animated, {
+  FadeIn,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
   withRepeat,
   withSequence,
-  withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "convex/react";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
+import * as Clipboard from "expo-clipboard";
 import { api } from "@/convex/_generated/api";
 import { useColors } from "@/hooks/use-theme";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,24 +27,6 @@ function formatDate(ts: number): string {
   const isToday = d.toDateString() === now.toDateString();
   if (isToday) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   return d.toLocaleDateString([], { month: "short", day: "numeric" });
-}
-
-function AnimatedRow({ children, index }: { children: React.ReactNode; index: number }) {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(12);
-
-  useEffect(() => {
-    const delay = Math.min(index * 50, 300);
-    opacity.value = withDelay(delay, withTiming(1, { duration: 300 }));
-    translateY.value = withDelay(delay, withSpring(0, { damping: 20, stiffness: 180 }));
-  }, []);
-
-  const style = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  return <Animated.View style={style}>{children}</Animated.View>;
 }
 
 function BreathingIcon() {
@@ -90,9 +73,77 @@ function IntelBadge({ count }: { count: number }) {
   );
 }
 
+type Conversation = NonNullable<ReturnType<typeof useQuery<typeof api.conversations.listConversations>>>[number];
+
+const keyExtractor = (item: Conversation) => item._id;
+
 export default function HistoryScreen() {
   const colors = useColors();
   const conversations = useQuery(api.conversations.listConversations);
+
+  const renderConversation = useCallback(({ item: conv }: ListRenderItemInfo<Conversation>) => (
+    <Animated.View entering={FadeIn.duration(300)}>
+      <Link href={`/(app)/conversation/${conv._id}`}>
+        <Link.Trigger>
+          <Pressable
+            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+            onPress={() => haptics.light()}
+            accessibilityLabel={"Conversation: " + conv.title}
+          >
+            <View style={styles.zoomSource}>
+              <DotIndicator intelCount={conv.intelCount} />
+              <View style={styles.rowContent}>
+                <Text style={styles.rowTitle} numberOfLines={1}>{conv.title}</Text>
+                {conv.preview ? (
+                  <Text style={styles.rowPreview} numberOfLines={1}>{conv.preview}</Text>
+                ) : null}
+                <View style={styles.rowMetaRow}>
+                  <Text style={styles.rowMeta}>
+                    {conv.messageCount} {conv.messageCount === 1 ? "msg" : "msgs"}
+                  </Text>
+                  {conv.intelCount > 0 ? <IntelBadge count={conv.intelCount} /> : null}
+                </View>
+              </View>
+              <Text style={styles.rowDate}>{formatDate(conv.updatedAt)}</Text>
+              <IconSymbol name="chevron.right" size={IconSize.sm} color={Colors.tertiaryLabel as string} />
+            </View>
+          </Pressable>
+        </Link.Trigger>
+        <Link.Preview>
+          <View style={styles.previewContainer}>
+            <Text style={styles.previewTitle}>{conv.title}</Text>
+            {conv.preview ? (
+              <Text style={styles.previewText} numberOfLines={3}>{conv.preview}</Text>
+            ) : null}
+            <View style={styles.previewMeta}>
+              <Text style={styles.previewMetaText}>
+                {conv.messageCount} {conv.messageCount === 1 ? "msg" : "msgs"}
+              </Text>
+              {conv.intelCount > 0 ? <IntelBadge count={conv.intelCount} /> : null}
+            </View>
+          </View>
+        </Link.Preview>
+        <Link.Menu>
+          <Link.MenuAction
+            title="Share"
+            icon="square.and.arrow.up"
+            onPress={() => {
+              haptics.light();
+              Share.share({ message: conv.title });
+            }}
+          />
+          <Link.MenuAction
+            title="Copy Title"
+            icon="doc.on.doc"
+            onPress={() => {
+              haptics.light();
+              Clipboard.setStringAsync(conv.title);
+            }}
+          />
+        </Link.Menu>
+      </Link>
+    </Animated.View>
+  ), []);
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background as string }]} edges={["top"]}>
@@ -101,6 +152,8 @@ export default function HistoryScreen() {
           onPress={() => router.back()}
           hitSlop={12}
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <IconSymbol name="chevron.left" size={IconSize.xl} color={Colors.systemBlue as string} />
           <Text style={styles.backLabel}>Back</Text>
@@ -128,36 +181,13 @@ export default function HistoryScreen() {
           <Text style={styles.emptySubtitle}>Start a conversation to get real-time intel</Text>
         </View>
       ) : (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
+        <FlashList
+          data={conversations}
+          renderItem={renderConversation}
+          keyExtractor={keyExtractor}
           showsVerticalScrollIndicator={false}
-        >
-          {conversations.map((conv, index) => (
-            <AnimatedRow key={conv._id} index={index}>
-              <Pressable
-                style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-                onPress={() => { haptics.light(); router.push(`/(app)/conversation/${conv._id}`); }}
-              >
-                <DotIndicator intelCount={conv.intelCount} />
-                <View style={styles.rowContent}>
-                  <Text style={styles.rowTitle} numberOfLines={1}>{conv.title}</Text>
-                  {conv.preview ? (
-                    <Text style={styles.rowPreview} numberOfLines={1}>{conv.preview}</Text>
-                  ) : null}
-                  <View style={styles.rowMetaRow}>
-                    <Text style={styles.rowMeta}>
-                      {conv.messageCount} {conv.messageCount === 1 ? "msg" : "msgs"}
-                    </Text>
-                    {conv.intelCount > 0 ? <IntelBadge count={conv.intelCount} /> : null}
-                  </View>
-                </View>
-                <Text style={styles.rowDate}>{formatDate(conv.updatedAt)}</Text>
-                <IconSymbol name="chevron.right" size={IconSize.sm} color={Colors.tertiaryLabel as string} />
-              </Pressable>
-            </AnimatedRow>
-          ))}
-        </ScrollView>
+          contentContainerStyle={styles.scrollContent}
+        />
       )}
     </SafeAreaView>
   );
@@ -193,18 +223,6 @@ const styles = StyleSheet.create({
     color: Colors.foreground as string,
     letterSpacing: -0.3,
   },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  muted: {
-    fontSize: FontSize.base,
-    color: Colors.mutedForeground as string,
-  },
-  scroll: {
-    flex: 1,
-  },
   scrollContent: {
     paddingVertical: Spacing.sm,
   },
@@ -219,6 +237,12 @@ const styles = StyleSheet.create({
   },
   rowPressed: {
     backgroundColor: Colors.secondarySystemFill as string,
+  },
+  zoomSource: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm + 2,
+    flex: 1,
   },
   dot: {
     width: 10,
@@ -276,4 +300,29 @@ const styles = StyleSheet.create({
   emptyState: { flex: 1, alignItems: "center", justifyContent: "center", gap: Spacing.md },
   emptyTitle: { fontSize: FontSize.lg, fontWeight: "600", color: Colors.foreground as string },
   emptySubtitle: { fontSize: FontSize.sm, color: Colors.mutedForeground as string },
+  previewContainer: {
+    padding: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  previewTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: "700",
+    color: Colors.foreground as string,
+    lineHeight: LineHeight.base + 4,
+  },
+  previewText: {
+    fontSize: FontSize.base,
+    color: Colors.tertiaryLabel as string,
+    lineHeight: LineHeight.base,
+  },
+  previewMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  previewMetaText: {
+    fontSize: FontSize.sm,
+    color: Colors.mutedForeground as string,
+  },
 });

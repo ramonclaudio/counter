@@ -1,9 +1,11 @@
-import { useState } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { useCallback, useState } from "react";
+import { View, Text, ScrollView, StyleSheet, Share } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, router } from "expo-router";
+import { Link, Stack, useLocalSearchParams, router } from "expo-router";
 import { useQuery } from "convex/react";
 import { Pressable } from "react-native";
+import { FlashList } from "@shopify/flash-list";
+import * as Clipboard from "expo-clipboard";
 import { api } from "@/convex/_generated/api";
 import { haptics } from "@/lib/haptics";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -28,6 +30,27 @@ function formatTime(ts: number): string {
   return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function MessageBubble({ msg }: { msg: Message }) {
+  const isUser = msg.role === "user";
+  return (
+    <View style={[styles.row, isUser ? styles.rowUser : styles.rowAssistant]}>
+      <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}>
+        <Text style={[styles.bubbleText, isUser ? styles.textUser : styles.textAssistant]}>
+          {msg.content}
+        </Text>
+        <Text style={[styles.timestamp, isUser ? styles.timestampUser : styles.timestampAssistant]}>
+          {formatTime(msg.timestamp)}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+const messageKeyExtractor = (_item: Message, index: number) => String(index);
+
+const buildTranscript = (messages: Message[]): string =>
+  messages.map((m) => `${m.role === "user" ? "You" : "Agent"}: ${m.content}`).join("\n\n");
+
 export default function ConversationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
@@ -36,10 +59,45 @@ export default function ConversationDetailScreen() {
     conversationId: id as Id<"conversations">,
   });
 
+  const renderMessage = useCallback(
+    ({ item }: { item: Message }) => <MessageBubble msg={item} />,
+    [],
+  );
+
+  const messages = conv ? (conv.messages as Message[]) : [];
+
+  const handleShare = useCallback(() => {
+    if (!conv) return;
+    haptics.light();
+    Share.share({
+      message: conv.summary || buildTranscript(messages),
+    });
+  }, [conv, messages]);
+
+  const handleCopy = useCallback(() => {
+    if (!conv) return;
+    haptics.light();
+    Clipboard.setStringAsync(buildTranscript(messages));
+  }, [conv, messages]);
+
   return (
+    <Link.AppleZoomTarget>
+    {conv && (
+      <Stack.Toolbar>
+        <Stack.Toolbar.Spacer />
+        <Stack.Toolbar.Button icon="square.and.arrow.up" onPress={handleShare}>
+          Share
+        </Stack.Toolbar.Button>
+        <Stack.Toolbar.Spacer />
+        <Stack.Toolbar.Button icon="doc.on.doc" onPress={handleCopy}>
+          Copy
+        </Stack.Toolbar.Button>
+        <Stack.Toolbar.Spacer />
+      </Stack.Toolbar>
+    )}
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background as string }]} edges={["top"]}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backButton}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Go back to history">
           <IconSymbol name="chevron.left" size={IconSize.xl} color={Colors.systemBlue as string} />
           <Text style={styles.backLabel}>History</Text>
         </Pressable>
@@ -64,12 +122,13 @@ export default function ConversationDetailScreen() {
         </View>
       ) : (
         <>
-          <View style={styles.tabBar}>
+          <View style={styles.tabBar} accessibilityRole="tablist">
             <Pressable
               style={[styles.tab, activeTab === "transcript" && styles.tabActive]}
               onPress={() => { haptics.light(); setActiveTab("transcript"); }}
               accessibilityRole="tab"
               accessibilityState={{ selected: activeTab === "transcript" }}
+              accessibilityLabel="Transcript tab"
             >
               <Text style={[styles.tabText, activeTab === "transcript" && styles.tabTextActive]}>
                 Transcript
@@ -80,6 +139,7 @@ export default function ConversationDetailScreen() {
               onPress={() => { haptics.light(); setActiveTab("intel"); }}
               accessibilityRole="tab"
               accessibilityState={{ selected: activeTab === "intel" }}
+              accessibilityLabel={`Intel tab, ${(conv.intelCards as IntelCardType[]).length} findings`}
             >
               <Text style={[styles.tabText, activeTab === "intel" && styles.tabTextActive]}>
                 Intel ({(conv.intelCards as IntelCardType[]).length})
@@ -87,10 +147,8 @@ export default function ConversationDetailScreen() {
             </Pressable>
           </View>
 
-          {/* AI-generated summary from ElevenLabs post-call webhook */}
-          {/* AI-generated summary */}
           {conv.summary && (
-            <View style={styles.summaryBanner}>
+            <View style={styles.summaryBanner} accessibilityRole="summary" accessibilityLabel={`Session summary: ${conv.summary}`}>
               <IconSymbol name="sparkles" size={IconSize.lg} color={AnimationColors.search} />
               <View style={{ flex: 1, gap: Spacing.xs }}>
                 <Text style={styles.summaryText}>{conv.summary}</Text>
@@ -104,7 +162,7 @@ export default function ConversationDetailScreen() {
               </View>
             </View>
           )}
-          {/* Collected data from post-call analysis */}
+
           {conv.collectedData && Object.keys(conv.collectedData as Record<string, unknown>).length > 0 && (
             <View style={styles.collectedDataRow}>
               {Object.entries(conv.collectedData as Record<string, { value: unknown }>).map(([key, item]) => (
@@ -116,59 +174,50 @@ export default function ConversationDetailScreen() {
             </View>
           )}
 
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {activeTab === "transcript" ? (
-              conv.messages.length > 0 ? (
-                <View style={styles.section}>
-                  <View style={styles.bubbles}>
-                    {(conv.messages as Message[]).map((msg, i) => {
-                      const isUser = msg.role === "user";
-                      return (
-                        <View key={i} style={[styles.row, isUser ? styles.rowUser : styles.rowAssistant]}>
-                          <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}>
-                            <Text style={[styles.bubbleText, isUser ? styles.textUser : styles.textAssistant]}>
-                              {msg.content}
-                            </Text>
-                            <Text style={[styles.timestamp, isUser ? styles.timestampUser : styles.timestampAssistant]}>
-                              {formatTime(msg.timestamp)}
-                            </Text>
-                          </View>
-                        </View>
-                      );
-                    })}
+          {activeTab === "transcript" ? (
+            messages.length > 0 ? (
+              <FlashList
+                data={messages}
+                renderItem={renderMessage}
+                keyExtractor={messageKeyExtractor}
+                contentContainerStyle={styles.transcriptList}
+                showsVerticalScrollIndicator={false}
+              />
+            ) : (
+              <View style={styles.center}>
+                <Text style={styles.muted}>No messages yet</Text>
+              </View>
+            )
+          ) : (
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {(conv.intelCards as IntelCardType[]).length > 0 ? (
+                <View style={styles.intelSection}>
+                  <View style={styles.intelAccent} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.intelSectionTitle}>
+                      {(conv.intelCards as IntelCardType[]).length}{" "}
+                      {(conv.intelCards as IntelCardType[]).length === 1 ? "finding" : "findings"}
+                    </Text>
+                    {(conv.intelCards as IntelCardType[]).map((card) => (
+                      <IntelCard key={card.id} card={card} />
+                    ))}
                   </View>
                 </View>
               ) : (
                 <View style={styles.center}>
-                  <Text style={styles.muted}>No messages yet</Text>
+                  <Text style={styles.muted}>No intel cards found</Text>
                 </View>
-              )
-            ) : (conv.intelCards as IntelCardType[]).length > 0 ? (
-              <View style={styles.intelSection}>
-                <View style={styles.intelAccent} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.intelSectionTitle}>
-                    {(conv.intelCards as IntelCardType[]).length}{" "}
-                    {(conv.intelCards as IntelCardType[]).length === 1 ? "finding" : "findings"}
-                  </Text>
-                  {(conv.intelCards as IntelCardType[]).map((card) => (
-                    <IntelCard key={card.id} card={card} />
-                  ))}
-                </View>
-              </View>
-            ) : (
-              <View style={styles.center}>
-                <Text style={styles.muted}>No intel cards found</Text>
-              </View>
-            )}
-          </ScrollView>
+              )}
+            </ScrollView>
+          )}
         </>
       )}
     </SafeAreaView>
+    </Link.AppleZoomTarget>
   );
 }
 
@@ -296,8 +345,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: Spacing["4xl"],
   },
-  section: {
+  transcriptList: {
+    paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
+    paddingBottom: Spacing["4xl"],
   },
   intelSection: {
     flexDirection: "row",
@@ -322,12 +373,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     marginBottom: Spacing.sm,
   },
-  bubbles: {
-    paddingHorizontal: Spacing.lg,
-    gap: Spacing.sm,
-  },
   row: {
     flexDirection: "row",
+    marginBottom: Spacing.sm,
   },
   rowUser: {
     justifyContent: "flex-end",

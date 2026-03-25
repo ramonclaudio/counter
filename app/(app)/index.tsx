@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   ScrollView,
@@ -6,13 +6,15 @@ import {
   Pressable,
   Text,
   TextInput,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-  Dimensions,
+  useWindowDimensions,
   Keyboard,
+  AppState,
 } from "react-native";
+import { FlashList, type FlashListRef, type ListRenderItemInfo } from "@shopify/flash-list";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useAnimatedStyle,
@@ -29,6 +31,8 @@ import Animated, {
   SlideInDown,
   SlideOutDown,
 } from "react-native-reanimated";
+import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
+import * as StoreReview from "expo-store-review";
 import { useCounter } from "@/hooks/use-counter";
 import { MiniOrb } from "@/components/counter/mini-orb";
 import { FeedItemView } from "@/components/counter/feed-item";
@@ -47,8 +51,6 @@ function getGreeting(): string {
   if (hour < 21) return "Good evening. Looking for a deal?";
   return "Late night shopping? Let's find a deal.";
 }
-
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 // --- Orb ---
 
@@ -100,6 +102,8 @@ function Orb({ isSpeaking, isConnected, isSearching, phase = "idle", size = "nor
 
   const speakColors = getPhaseColors(phase);
   const baseColor = getPhaseBaseColor(phase);
+  const speakColorIndices = useMemo(() => speakColors.map((_, i) => i), [speakColors]);
+  const speakColorValues = useMemo(() => [...speakColors], [speakColors]);
 
   useEffect(() => {
     if (!isConnected) {
@@ -138,7 +142,7 @@ function Orb({ isSpeaking, isConnected, isSearching, phase = "idle", size = "nor
     const mode = orbMode.value;
     if (mode === 3) return { backgroundColor: Colors.systemGray as string, shadowOpacity: 0.15 };
     if (mode === 2) return { backgroundColor: SEARCH_COLOR, shadowOpacity: 0.5 };
-    if (mode === 1) return { backgroundColor: interpolateColor(colorProgress.value, speakColors.map((_, i) => i), [...speakColors]), shadowOpacity: isImmersive ? 0.8 : 0.65 };
+    if (mode === 1) return { backgroundColor: interpolateColor(colorProgress.value, speakColorIndices, speakColorValues), shadowOpacity: isImmersive ? 0.8 : 0.65 };
     return { backgroundColor: baseColor, shadowOpacity: 0.4 };
   });
 
@@ -265,7 +269,8 @@ function ImmersiveVoiceOverlay({ isSpeaking, isSearching, phase, mode, micMuted,
     <Animated.View
       style={styles.immersiveOverlay}
       entering={FadeIn.duration(300)}
-      exiting={FadeOut.duration(200)}
+      exiting={FadeOut.duration(300)}
+      accessibilityViewIsModal
     >
       <LinearGradient
         colors={[Overlay.dark, gradient[1], gradient[2], Overlay.darker]}
@@ -277,7 +282,7 @@ function ImmersiveVoiceOverlay({ isSpeaking, isSearching, phase, mode, micMuted,
       </Pressable>
       <View style={styles.immersiveCenter}>
         <Orb isSpeaking={isSpeaking} isConnected isSearching={isSearching} phase={phase} size="immersive" />
-        <Text style={styles.immersivePhase}>
+        <Text style={styles.immersivePhase} accessibilityLiveRegion="polite">
           {mode === "live" ? "LIVE" : mode === "practice" ? "Practice" : phase === "research" ? "Researching" : phase === "coach" ? "Coaching" : phase === "advisor" ? "Advising" : "Listening"}
         </Text>
         {mode === "live" && <Text style={styles.immersiveLiveHint}>Listening to your negotiation</Text>}
@@ -287,11 +292,12 @@ function ImmersiveVoiceOverlay({ isSpeaking, isSearching, phase, mode, micMuted,
           style={[styles.immersiveButton, micMuted && styles.immersiveButtonActive]}
           onPress={onMicToggle}
           accessibilityRole="button"
+          accessibilityLabel={micMuted ? "Unmute microphone" : "Mute microphone"}
         >
           <IconSymbol name={micMuted ? "mic.slash.fill" : "mic.fill"} size={IconSize["3xl"]} color={Overlay.onDark} />
           <Text style={styles.immersiveButtonLabel}>{micMuted ? "Unmute" : "Mute"}</Text>
         </Pressable>
-        <Pressable style={styles.immersiveEndButton} onPress={onEnd} accessibilityRole="button">
+        <Pressable style={styles.immersiveEndButton} onPress={onEnd} accessibilityRole="button" accessibilityLabel="End call">
           <IconSymbol name="phone.down.fill" size={IconSize["3xl"]} color={Overlay.onDark} />
           <Text style={styles.immersiveButtonLabel}>End</Text>
         </Pressable>
@@ -389,7 +395,7 @@ function PostSessionSummary({ feed, onNewSession, onDismiss, onFollowUp, onFeedb
           </View>
           <View style={styles.followUpChips}>
             {FOLLOWUP_SUGGESTIONS.map((s) => (
-              <Pressable key={s} style={styles.followUpChip} onPress={() => { haptics.light(); onFollowUp(s); }}>
+              <Pressable key={s} style={styles.followUpChip} onPress={() => { haptics.light(); onFollowUp(s); }} accessibilityRole="button" accessibilityLabel={s}>
                 <Text style={styles.followUpChipText}>{s}</Text>
               </Pressable>
             ))}
@@ -397,11 +403,11 @@ function PostSessionSummary({ feed, onNewSession, onDismiss, onFollowUp, onFeedb
         </View>
 
         {/* Actions */}
-        <Pressable style={styles.startButton} onPress={onNewSession} accessibilityRole="button">
+        <Pressable style={styles.startButton} onPress={onNewSession} accessibilityRole="button" accessibilityLabel="Start new session">
           <IconSymbol name="mic.fill" size={IconSize["2xl"]} color={Colors.onColor} />
           <Text style={styles.startLabel}>New Session</Text>
         </Pressable>
-        <Pressable onPress={onDismiss} hitSlop={12} style={styles.dismissButton} accessibilityRole="button">
+        <Pressable onPress={onDismiss} hitSlop={12} style={styles.dismissButton} accessibilityRole="button" accessibilityLabel="Dismiss session summary">
           <Text style={styles.dismissLabel}>Dismiss</Text>
         </Pressable>
         <Text style={styles.disclaimer}>Prices may vary. Always verify before purchasing.</Text>
@@ -413,6 +419,7 @@ function PostSessionSummary({ feed, onNewSession, onDismiss, onFollowUp, onFeedb
 // --- Main Screen ---
 
 export default function ConversationScreen() {
+  const { width: screenWidth } = useWindowDimensions();
   const { startSession, endSession, toggleMicMuted, sendTextMessage, sendFeedback, canSendFeedback, status, isSpeaking, conversationPhase, isSearching, error, feedItems, sessionMode } =
     useCounter();
   const [micMuted, setMicMutedState] = useState(false);
@@ -422,12 +429,32 @@ export default function ConversationScreen() {
   const [immersiveMode, setImmersiveMode] = useState(false);
   const [textInput, setTextInput] = useState("");
   const [showTextInput, setShowTextInput] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<FlashListRef<FeedItem>>(null);
   const prevSearching = useRef(false);
   const textInputRef = useRef<TextInput>(null);
+  const reviewRequested = useRef(false);
 
   const isConnected = status === "connected";
   const isConnecting = status === "connecting";
+
+
+  useEffect(() => {
+    if (isConnected) {
+      activateKeepAwakeAsync("voice-session");
+    } else {
+      deactivateKeepAwake("voice-session");
+    }
+    return () => { deactivateKeepAwake("voice-session"); };
+  }, [isConnected]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "background" && isConnected) {
+        handleEnd();
+      }
+    });
+    return () => sub.remove();
+  }, [isConnected]);
 
   useEffect(() => {
     if (feedItems.length > 0) {
@@ -463,6 +490,7 @@ export default function ConversationScreen() {
   }, [feedItems]);
 
   const handleStart = async (opts?: { context?: string; firstMessage?: string; mode?: SessionMode }) => {
+    if (isStarting || isConnecting || isConnected) return;
     setIsStarting(true);
     setImmersiveMode(false);
     setShowTextInput(false);
@@ -492,6 +520,7 @@ export default function ConversationScreen() {
 
   const dismissSession = () => {
     setLastSessionFeed([]);
+    reviewRequested.current = false;
   };
 
   const handleTextSend = () => {
@@ -501,6 +530,29 @@ export default function ConversationScreen() {
     setTextInput("");
     Keyboard.dismiss();
   };
+
+  const feedData: FeedItem[] = isSearching
+    ? [...feedItems, { type: "searching" as const, timestamp: Date.now() }]
+    : feedItems;
+
+  const feedKeyExtractor = useCallback((item: FeedItem) => {
+    switch (item.type) {
+      case "intel":
+        return `intel-${item.cards[0]?.id ?? item.timestamp}`;
+      case "user-message":
+        return `user-${item.message.timestamp}`;
+      case "assistant-message":
+        return `assistant-${item.message.timestamp}`;
+      case "searching":
+        return "searching";
+    }
+  }, []);
+
+  const renderFeedItem = useCallback(({ item }: ListRenderItemInfo<FeedItem>) => (
+    <FeedItemView item={item} />
+  ), []);
+
+  const getFeedItemType = useCallback((item: FeedItem) => item.type, []);
 
   const toggleTextInput = () => {
     setShowTextInput(!showTextInput);
@@ -524,7 +576,15 @@ export default function ConversationScreen() {
             onNewSession={() => { dismissSession(); handleStart(); }}
             onDismiss={dismissSession}
             onFollowUp={(q) => { const ctx = buildSessionContext(lastSessionFeed, q); dismissSession(); handleStart({ context: ctx }); }}
-            onFeedback={canSendFeedback ? sendFeedback : undefined}
+            onFeedback={canSendFeedback ? (liked: boolean) => {
+              sendFeedback(liked);
+              if (liked && !reviewRequested.current) {
+                reviewRequested.current = true;
+                setTimeout(async () => {
+                  if (await StoreReview.isAvailableAsync()) StoreReview.requestReview();
+                }, 1000);
+              }
+            } : undefined}
           />
         </SafeAreaView>
       );
@@ -552,7 +612,7 @@ export default function ConversationScreen() {
             <Orb isSpeaking={false} isConnected isSearching={false} />
           </View>
           <Text style={styles.homeGreeting}>{getGreeting()}</Text>
-          {error && <Text style={[styles.statusLabel, { color: Colors.systemRed as string }]}>{error}</Text>}
+          {error && <View accessibilityLiveRegion="assertive"><Text style={[styles.statusLabel, { color: Colors.systemRed as string }]}>{error}</Text></View>}
 
           {/* Mode selector */}
           <View style={styles.modeSelector}>
@@ -566,6 +626,7 @@ export default function ConversationScreen() {
                   onPress={() => { haptics.light(); setSelectedMode(mode); }}
                   accessibilityRole="tab"
                   accessibilityState={{ selected: active }}
+                  accessibilityLabel={`${cfg.label}: ${cfg.description}`}
                 >
                   <IconSymbol name={cfg.icon} size={IconSize["2xl"]} color={active ? cfg.color : (Colors.tertiaryLabel as string)} />
                   <Text style={[styles.modeLabel, active && { color: cfg.color }]}>{cfg.label}</Text>
@@ -581,6 +642,8 @@ export default function ConversationScreen() {
             onPress={() => handleStart()}
             disabled={isStarting}
             accessibilityRole="button"
+            accessibilityLabel={isStarting ? "Connecting" : MODE_CONFIGS[selectedMode].startLabel}
+            accessibilityState={{ disabled: isStarting }}
           >
             <IconSymbol name={selectedMode === "live" ? "ear.fill" : "mic.fill"} size={IconSize["3xl"]} color={Colors.onColor} />
             <Text style={styles.homeStartLabel}>{isStarting ? "Connecting..." : MODE_CONFIGS[selectedMode].startLabel}</Text>
@@ -594,7 +657,7 @@ export default function ConversationScreen() {
             {CATEGORIES.map((cat) => (
               <Pressable
                 key={cat.label}
-                style={({ pressed }) => [styles.homeCategoryCard, pressed && { opacity: 0.7 }]}
+                style={({ pressed }) => [styles.homeCategoryCard, { width: (screenWidth - Spacing.lg * 2 - Spacing.md * 2) / 3 }, pressed && { opacity: 0.7 }]}
                 onPress={() => { haptics.light(); handleStart({ context: cat.context, firstMessage: cat.greeting }); }}
                 accessibilityRole="button"
                 accessibilityLabel={cat.label}
@@ -614,6 +677,7 @@ export default function ConversationScreen() {
                 style={({ pressed }) => [styles.homeSuggestionChip, pressed && { opacity: 0.7 }]}
                 onPress={() => { haptics.light(); handleStart({ context: `The user wants to talk about: ${s}` }); }}
                 accessibilityRole="button"
+                accessibilityLabel={`Start conversation about ${s}`}
               >
                 <IconSymbol name="mic.fill" size={IconSize.sm} color={Colors.tertiaryLabel as string} />
                 <Text style={styles.homeSuggestionText}>{s}</Text>
@@ -642,7 +706,7 @@ export default function ConversationScreen() {
   // --- Connected: feed layout ---
   return (
     <SafeAreaView style={styles.root}>
-    <KeyboardAvoidingView style={styles.keyboardAvoiding} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={0}>
+    <KeyboardAvoidingView style={styles.keyboardAvoiding} keyboardVerticalOffset={0}>
       {/* Ambient gradient backdrop */}
       <LinearGradient
         colors={getPhaseGradient(conversationPhase)}
@@ -671,29 +735,34 @@ export default function ConversationScreen() {
 
       {/* Status bar */}
       {error && (
-        <View style={styles.statusBar}>
+        <View style={styles.statusBar} accessibilityLiveRegion="assertive">
           <Text style={[styles.statusLabel, { color: Colors.systemRed as string }]}>{error}</Text>
         </View>
       )}
 
       {/* Feed */}
-      <ScrollView
-        ref={scrollRef}
-        style={styles.feed}
-        contentContainerStyle={styles.feedContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {feedItems.length === 0 && !isSearching && <FeedEmptyState />}
-        {feedItems.map((item, i) => (
-          <FeedItemView key={i} item={item} />
-        ))}
-        {isSearching && <FeedItemView item={{ type: "searching", timestamp: Date.now() }} />}
-      </ScrollView>
+      {feedData.length === 0 ? (
+        <View style={[styles.feed, styles.feedContent]}>
+          <FeedEmptyState />
+        </View>
+      ) : (
+        <View style={styles.feed}>
+          <FlashList
+            ref={scrollRef}
+            data={feedData}
+            renderItem={renderFeedItem}
+            keyExtractor={feedKeyExtractor}
+            getItemType={getFeedItemType}
+            contentContainerStyle={styles.feedContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          />
+        </View>
+      )}
 
       {/* Text input bar */}
       {showTextInput && (
-        <Animated.View style={styles.textInputBar} entering={SlideInDown.duration(200)} exiting={SlideOutDown.duration(150)}>
+        <Animated.View style={styles.textInputBar} entering={SlideInDown.duration(200)} exiting={SlideOutDown.duration(200)}>
           <TextInput
             ref={textInputRef}
             style={styles.textInputField}
@@ -703,6 +772,8 @@ export default function ConversationScreen() {
             placeholderTextColor={Colors.tertiaryLabel as string}
             returnKeyType="send"
             onSubmitEditing={handleTextSend}
+            accessibilityLabel="Message input"
+            accessibilityHint="Type a message to send to the AI advisor"
           />
           <Pressable style={styles.sendButton} onPress={handleTextSend} accessibilityRole="button" accessibilityLabel="Send message">
             <IconSymbol name="arrow.up.circle.fill" size={IconSize["3xl"]} color={textInput.trim() ? (Colors.primary as string) : (Colors.tertiaryLabel as string)} />
@@ -761,6 +832,7 @@ export default function ConversationScreen() {
           onDismiss={() => setImmersiveMode(false)}
         />
       )}
+      <StatusBar hidden={immersiveMode} animated />
     </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -903,7 +975,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing["2xl"],
   },
   homeCategoryCard: {
-    width: (Dimensions.get("window").width - Spacing.lg * 2 - Spacing.md * 2) / 3,
     alignItems: "center",
     gap: Spacing.sm,
     paddingVertical: Spacing.lg,

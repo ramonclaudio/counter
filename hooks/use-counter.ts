@@ -37,6 +37,13 @@ export function useCounter() {
     feedCountRef.current = feedItems.length;
   }, [feedItems.length]);
 
+  useEffect(() => {
+    return () => {
+      clearInterval(keepaliveRef.current);
+      clearTimeout(searchTimeoutRef.current);
+    };
+  }, []);
+
   const clearSearchTimeout = () => clearTimeout(searchTimeoutRef.current);
 
   const conversation = useConversation({
@@ -71,7 +78,7 @@ export function useCounter() {
         setFeedItems((prev) => [...prev, { type: 'intel', cards: cardsWithIds, timestamp: Date.now() }]);
         clearSearchTimeout();
         setIsSearching(false);
-        haptics.medium();
+        haptics.success();
         return "Cards displayed";
       },
       setConversationPhase: async (params: unknown) => {
@@ -168,7 +175,7 @@ export function useCounter() {
           (lower.includes("right now") && (lower.includes("dig") || lower.includes("search") || lower.includes("pull")))
         )) {
           clearSearchTimeout();
-          searchTimeoutRef.current = setTimeout(() => setIsSearching(false), 15000);
+          searchTimeoutRef.current = setTimeout(() => setIsSearching(false), 30000);
           setIsSearching(true);
         }
         // Clear searching when agent delivers long results or admits failure
