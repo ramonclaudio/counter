@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from "react";
-import { View, Text, Pressable, Share, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import Animated, {
   FadeIn,
   useAnimatedStyle,
@@ -11,8 +11,7 @@ import Animated, {
 import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "convex/react";
-import { Link, router } from "expo-router";
-import * as Clipboard from "expo-clipboard";
+import { router } from "expo-router";
 import { api } from "@/convex/_generated/api";
 import { useColors } from "@/hooks/use-theme";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,65 +82,27 @@ export default function HistoryScreen() {
 
   const renderConversation = useCallback(({ item: conv }: ListRenderItemInfo<Conversation>) => (
     <Animated.View entering={FadeIn.duration(300)}>
-      <Link href={`/(app)/conversation/${conv._id}`}>
-        <Link.Trigger>
-          <Pressable
-            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-            onPress={() => haptics.light()}
-            accessibilityLabel={"Conversation: " + conv.title}
-          >
-            <View style={styles.zoomSource}>
-              <DotIndicator intelCount={conv.intelCount} />
-              <View style={styles.rowContent}>
-                <Text style={styles.rowTitle} numberOfLines={1}>{conv.title}</Text>
-                {conv.preview ? (
-                  <Text style={styles.rowPreview} numberOfLines={1}>{conv.preview}</Text>
-                ) : null}
-                <View style={styles.rowMetaRow}>
-                  <Text style={styles.rowMeta}>
-                    {conv.messageCount} {conv.messageCount === 1 ? "msg" : "msgs"}
-                  </Text>
-                  {conv.intelCount > 0 ? <IntelBadge count={conv.intelCount} /> : null}
-                </View>
-              </View>
-              <Text style={styles.rowDate}>{formatDate(conv.updatedAt)}</Text>
-              <IconSymbol name="chevron.right" size={IconSize.sm} color={Colors.tertiaryLabel as string} />
-            </View>
-          </Pressable>
-        </Link.Trigger>
-        <Link.Preview>
-          <View style={styles.previewContainer}>
-            <Text style={styles.previewTitle}>{conv.title}</Text>
-            {conv.preview ? (
-              <Text style={styles.previewText} numberOfLines={3}>{conv.preview}</Text>
-            ) : null}
-            <View style={styles.previewMeta}>
-              <Text style={styles.previewMetaText}>
-                {conv.messageCount} {conv.messageCount === 1 ? "msg" : "msgs"}
-              </Text>
-              {conv.intelCount > 0 ? <IntelBadge count={conv.intelCount} /> : null}
-            </View>
+      <Pressable
+        style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+        onPress={() => { haptics.light(); router.push(`/(app)/conversation/${conv._id}`); }}
+        accessibilityLabel={"Conversation: " + conv.title}
+      >
+        <DotIndicator intelCount={conv.intelCount} />
+        <View style={styles.rowContent}>
+          <Text style={styles.rowTitle} numberOfLines={1}>{conv.title}</Text>
+          {conv.preview ? (
+            <Text style={styles.rowPreview} numberOfLines={1}>{conv.preview}</Text>
+          ) : null}
+          <View style={styles.rowMetaRow}>
+            <Text style={styles.rowMeta}>
+              {conv.messageCount} {conv.messageCount === 1 ? "msg" : "msgs"}
+            </Text>
+            {conv.intelCount > 0 ? <IntelBadge count={conv.intelCount} /> : null}
           </View>
-        </Link.Preview>
-        <Link.Menu>
-          <Link.MenuAction
-            title="Share"
-            icon="square.and.arrow.up"
-            onPress={() => {
-              haptics.light();
-              Share.share({ message: conv.title });
-            }}
-          />
-          <Link.MenuAction
-            title="Copy Title"
-            icon="doc.on.doc"
-            onPress={() => {
-              haptics.light();
-              Clipboard.setStringAsync(conv.title);
-            }}
-          />
-        </Link.Menu>
-      </Link>
+        </View>
+        <Text style={styles.rowDate}>{formatDate(conv.updatedAt)}</Text>
+        <IconSymbol name="chevron.right" size={IconSize.sm} color={Colors.tertiaryLabel as string} />
+      </Pressable>
     </Animated.View>
   ), []);
 
@@ -185,6 +146,7 @@ export default function HistoryScreen() {
           data={conversations}
           renderItem={renderConversation}
           keyExtractor={keyExtractor}
+          estimatedItemSize={80}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         />
@@ -237,12 +199,6 @@ const styles = StyleSheet.create({
   },
   rowPressed: {
     backgroundColor: Colors.secondarySystemFill as string,
-  },
-  zoomSource: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm + 2,
-    flex: 1,
   },
   dot: {
     width: 10,
@@ -300,29 +256,4 @@ const styles = StyleSheet.create({
   emptyState: { flex: 1, alignItems: "center", justifyContent: "center", gap: Spacing.md },
   emptyTitle: { fontSize: FontSize.lg, fontWeight: "600", color: Colors.foreground as string },
   emptySubtitle: { fontSize: FontSize.sm, color: Colors.mutedForeground as string },
-  previewContainer: {
-    padding: Spacing.lg,
-    gap: Spacing.sm,
-  },
-  previewTitle: {
-    fontSize: FontSize.xl,
-    fontWeight: "700",
-    color: Colors.foreground as string,
-    lineHeight: LineHeight.base + 4,
-  },
-  previewText: {
-    fontSize: FontSize.base,
-    color: Colors.tertiaryLabel as string,
-    lineHeight: LineHeight.base,
-  },
-  previewMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-    marginTop: Spacing.xs,
-  },
-  previewMetaText: {
-    fontSize: FontSize.sm,
-    color: Colors.mutedForeground as string,
-  },
 });
