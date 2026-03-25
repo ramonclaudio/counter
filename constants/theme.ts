@@ -1,6 +1,8 @@
 import { Color } from 'expo-router';
 import { DynamicColorIOS } from 'react-native';
 
+import { FontFamily } from '@/constants/layout';
+
 export const ShadowColor = '#000000' as const;
 
 export const HeaderTint = Color.ios.label;
@@ -135,18 +137,18 @@ export const Radius = {
 // Phase base colors — single source of truth for orb, badge, gradient, mini-orb
 // Character-first: coach is low-chroma calm, research/advisor are vivid
 export const PhaseColors = {
-  idle:     Colors.primary as string,
-  research: '#D9960F', // warm amber — high chroma, medium lightness
+  idle:     '#D9960F', // warm amber — matches brand icon
+  research: '#0088FF', // vivid blue — clarity, search, intelligence
   coach:    '#A692CA', // muted lavender — low chroma, high lightness (calm)
   advisor:  '#0EA878', // deep emerald — high chroma, lower lightness (decisive)
 } as const;
 
 export const AnimationColors = {
   // OKLCH-informed: constant perceived lightness across each cycle
-  // Speaking (default): L≈0.62, C≈0.18, H≈250-265
-  speaking: ['#0088FF', '#0091F0', '#009AE8', '#007AEE', '#006BE0'] as const,
-  // Research: L≈0.74, C≈0.16, H≈75-90
-  research: ['#E6A220', '#EDB02C', '#E6A220', '#D8961C', '#CF8E18'] as const,
+  // Speaking (default): amber cycle — matches brand orb
+  speaking: ['#E6A220', '#EDB02C', '#E6A220', '#D8961C', '#CF8E18'] as const,
+  // Research: blue cycle — vivid, intelligence, search
+  research: ['#0088FF', '#0091F0', '#009AE8', '#007AEE', '#006BE0'] as const,
   // Coach: L≈0.78, C≈0.08, H≈290-300
   coach: ['#B8A4D8', '#C2B0E0', '#B8A4D8', '#AE9AD0', '#A692CA'] as const,
   // Advisor: L≈0.65, C≈0.15, H≈165-175
@@ -173,8 +175,8 @@ export const Overlay = {
 
 // Phase-tinted gradients for ambient backgrounds
 export const PhaseGradients: Record<string, [string, string, string, string]> = {
-  idle:     ['transparent', 'rgba(0,136,255,0.04)', 'rgba(0,136,255,0.02)', 'transparent'],
-  research: ['transparent', 'rgba(217,150,15,0.06)', 'rgba(217,150,15,0.03)', 'transparent'],
+  idle:     ['transparent', 'rgba(217,150,15,0.06)', 'rgba(217,150,15,0.03)', 'transparent'],
+  research: ['transparent', 'rgba(0,136,255,0.04)', 'rgba(0,136,255,0.02)', 'transparent'],
   coach:    ['transparent', 'rgba(166,146,202,0.04)', 'rgba(166,146,202,0.02)', 'transparent'],
   advisor:  ['transparent', 'rgba(14,168,120,0.07)', 'rgba(14,168,120,0.04)', 'transparent'],
 } as const;
@@ -213,9 +215,9 @@ export const CardTypeColors = {
 } as const;
 
 export const Typography = {
-  default: { fontSize: 16, lineHeight: 24 },
-  defaultSemiBold: { fontSize: 16, lineHeight: 24, fontWeight: '600' as const },
-  title: { fontSize: 30, lineHeight: 38, fontWeight: '700' as const, letterSpacing: -0.5 },
-  subtitle: { fontSize: 20, lineHeight: 26, fontWeight: '600' as const },
-  link: { fontSize: 16, lineHeight: 24 },
+  default: { fontSize: 16, lineHeight: 24, fontFamily: FontFamily.regular },
+  defaultSemiBold: { fontSize: 16, lineHeight: 24, fontFamily: FontFamily.semiBold },
+  title: { fontSize: 30, lineHeight: 38, fontFamily: FontFamily.bold, letterSpacing: -0.5 },
+  subtitle: { fontSize: 20, lineHeight: 26, fontFamily: FontFamily.semiBold },
+  link: { fontSize: 16, lineHeight: 24, fontFamily: FontFamily.regular },
 };

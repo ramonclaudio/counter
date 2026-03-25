@@ -15,7 +15,7 @@ export const MODE_CONFIGS: Record<SessionMode, ModeConfig> = {
     label: "Research",
     icon: "magnifyingglass.circle.fill",
     description: "Find prices, alternatives, and build your negotiation game plan",
-    color: "#D9960F",
+    color: "#0088FF",
     startLabel: "Start Research",
     systemPrompt: [
       "# Personality",
