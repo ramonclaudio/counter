@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, Share } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, Stack, useLocalSearchParams, router } from "expo-router";
+import { Stack, useLocalSearchParams, router } from "expo-router";
 import { useQuery } from "convex/react";
 import { Pressable } from "react-native";
 import { FlashList } from "@shopify/flash-list";
@@ -81,7 +81,7 @@ export default function ConversationDetailScreen() {
   }, [conv, messages]);
 
   return (
-    <Link.AppleZoomTarget>
+    <>
     {conv && (
       <Stack.Toolbar>
         <Stack.Toolbar.Spacer />
@@ -180,6 +180,7 @@ export default function ConversationDetailScreen() {
                 data={messages}
                 renderItem={renderMessage}
                 keyExtractor={messageKeyExtractor}
+                estimatedItemSize={80}
                 contentContainerStyle={styles.transcriptList}
                 showsVerticalScrollIndicator={false}
               />
@@ -217,7 +218,7 @@ export default function ConversationDetailScreen() {
         </>
       )}
     </SafeAreaView>
-    </Link.AppleZoomTarget>
+    </>
   );
 }
 

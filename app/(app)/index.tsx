@@ -688,6 +688,7 @@ export default function ConversationScreen() {
             renderItem={renderFeedItem}
             keyExtractor={feedKeyExtractor}
             getItemType={getFeedItemType}
+            estimatedItemSize={120}
             contentContainerStyle={styles.feedContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
