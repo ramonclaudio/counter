@@ -1,6 +1,9 @@
 .expo
 .git
 dist
+node_modules
+ios/Pods
+ios/.xcode.env.local
 __tests__
 *.test.ts
 *.test.tsx
