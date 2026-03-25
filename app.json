@@ -33,7 +33,8 @@
             ]
           }
         ]
-      }
+      },
+      "bitcode": false
     },
     "plugins": [
       [
@@ -56,7 +57,7 @@
       "reactCompiler": true
     },
     "updates": {
-      "url": "https://u.expo.dev/27495040-f0ab-4f2f-b207-72a0dbc118b6",
+      "url": "https://u.expo.dev/a273e2b0-3090-4e71-b663-9123433e0423",
       "enableBsdiffPatchSupport": true
     },
     "runtimeVersion": {
@@ -72,6 +73,18 @@
         "projectId": "a273e2b0-3090-4e71-b663-9123433e0423"
       }
     },
-    "owner": "ramonclaudio"
+    "owner": "ramonclaudio",
+    "android": {
+      "permissions": [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WAKE_LOCK",
+        "android.permission.BLUETOOTH"
+      ]
+    }
   }
 }

@@ -48,6 +48,7 @@
     "expo-splash-screen": "56.0.0-canary-20260305-5163746",
     "expo-status-bar": "56.0.0-canary-20260305-5163746",
     "expo-symbols": "56.0.0-canary-20260305-5163746",
+    "expo-updates": "56.0.0-canary-20260305-5163746",
     "expo-web-browser": "56.0.0-canary-20260305-5163746",
     "livekit-client": "^2.17.3",
     "react": "19.2.3",
