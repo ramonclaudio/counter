@@ -14,7 +14,6 @@ import { FlashList, type FlashListRef, type ListRenderItemInfo } from "@shopify/
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useAnimatedStyle,
@@ -38,7 +37,7 @@ import { MiniOrb } from "@/components/counter/mini-orb";
 import { FeedItemView } from "@/components/counter/feed-item";
 import { PhaseBadge } from "@/components/counter/phase-badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors, Radius, AnimationColors, PhaseColors, PhaseGradients, Overlay } from "@/constants/theme";
+import { Colors, Radius, AnimationColors, PhaseColors, PhaseGradients } from "@/constants/theme";
 import { Spacing, FontSize, TouchTarget, IconSize } from "@/constants/layout";
 import { haptics } from "@/lib/haptics";
 import { MODE_CONFIGS } from "@/constants/modes";
@@ -56,8 +55,6 @@ function getGreeting(): string {
 
 const ORB_SIZE = 180;
 const ORB_RING_SIZE = ORB_SIZE + 40;
-const IMMERSIVE_ORB_SIZE = 240;
-const IMMERSIVE_RING_SIZE = IMMERSIVE_ORB_SIZE + 50;
 const SEARCH_COLOR = AnimationColors.search;
 const DOT_COUNT = 5;
 const DOT_ORBIT_RADIUS = ORB_RING_SIZE / 2 + 16;
@@ -88,11 +85,10 @@ function OrbDot({ index, total, rotate }: { index: number; total: number; rotate
 
 function Orb({ isSpeaking, isConnected, isSearching, phase = "idle", size = "normal" }: {
   isSpeaking: boolean; isConnected: boolean; isSearching: boolean;
-  phase?: ConversationPhase; size?: "normal" | "immersive";
+  phase?: ConversationPhase;
 }) {
-  const isImmersive = size === "immersive";
-  const orbSize = isImmersive ? IMMERSIVE_ORB_SIZE : ORB_SIZE;
-  const ringSize = isImmersive ? IMMERSIVE_RING_SIZE : ORB_RING_SIZE;
+  const orbSize = ORB_SIZE;
+  const ringSize = ORB_RING_SIZE;
 
   const pulse = useSharedValue(1);
   const ring = useSharedValue(0.6);
@@ -118,8 +114,8 @@ function Orb({ isSpeaking, isConnected, isSearching, phase = "idle", size = "nor
       colorProgress.value = 0;
     } else if (isSpeaking) {
       orbMode.value = 1;
-      const springConfig = isImmersive ? { damping: 5, stiffness: 120 } : { damping: 6, stiffness: 140 };
-      pulse.value = withRepeat(withSequence(withSpring(isImmersive ? 1.12 : 1.09, springConfig), withSpring(isImmersive ? 0.93 : 0.96, springConfig)), -1, true);
+      const springConfig = { damping: 6, stiffness: 140 };
+      pulse.value = withRepeat(withSequence(withSpring(1.09, springConfig), withSpring(0.96, springConfig)), -1, true);
       ring.value = withRepeat(withSequence(withTiming(1, { duration: 500 }), withTiming(0.55, { duration: 500 })), -1, true);
       colorProgress.value = withRepeat(withTiming(speakColors.length - 1, { duration: 2400, easing: Easing.linear }), -1, false);
     } else {
@@ -142,7 +138,7 @@ function Orb({ isSpeaking, isConnected, isSearching, phase = "idle", size = "nor
     const mode = orbMode.value;
     if (mode === 3) return { backgroundColor: Colors.systemGray as string, shadowOpacity: 0.15 };
     if (mode === 2) return { backgroundColor: SEARCH_COLOR, shadowOpacity: 0.5 };
-    if (mode === 1) return { backgroundColor: interpolateColor(colorProgress.value, speakColorIndices, speakColorValues), shadowOpacity: isImmersive ? 0.8 : 0.65 };
+    if (mode === 1) return { backgroundColor: interpolateColor(colorProgress.value, speakColorIndices, speakColorValues), shadowOpacity: 0.65 };
     return { backgroundColor: baseColor, shadowOpacity: 0.4 };
   });
 
@@ -255,52 +251,6 @@ function FeedEmptyState({ onSuggestion }: { onSuggestion?: (text: string) => voi
             <Text style={styles.suggestionText}>{s}</Text>
           </Pressable>
         ))}
-      </View>
-    </Animated.View>
-  );
-}
-
-function ImmersiveVoiceOverlay({ isSpeaking, isSearching, phase, mode, micMuted, onMicToggle, onEnd, onDismiss }: {
-  isSpeaking: boolean; isSearching: boolean; phase: ConversationPhase; mode: SessionMode;
-  micMuted: boolean; onMicToggle: () => void; onEnd: () => void; onDismiss: () => void;
-}) {
-  const gradient = getPhaseGradient(phase);
-  return (
-    <Animated.View
-      style={styles.immersiveOverlay}
-      entering={FadeIn.duration(300)}
-      exiting={FadeOut.duration(300)}
-      accessibilityViewIsModal
-    >
-      <LinearGradient
-        colors={[Overlay.dark, gradient[1], gradient[2], Overlay.darker]}
-        locations={[0, 0.3, 0.6, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      <Pressable style={styles.immersiveDismiss} onPress={onDismiss} accessibilityRole="button" accessibilityLabel="Exit immersive mode">
-        <IconSymbol name="chevron.down" size={IconSize.xl} color={Overlay.onDarkQuaternary} />
-      </Pressable>
-      <View style={styles.immersiveCenter}>
-        <Orb isSpeaking={isSpeaking} isConnected isSearching={isSearching} phase={phase} size="immersive" />
-        <Text style={styles.immersivePhase} accessibilityLiveRegion="polite">
-          {mode === "live" ? "LIVE" : mode === "practice" ? "Practice" : phase === "research" ? "Researching" : phase === "coach" ? "Coaching" : phase === "advisor" ? "Advising" : "Listening"}
-        </Text>
-        {mode === "live" && <Text style={styles.immersiveLiveHint}>Listening to your negotiation</Text>}
-      </View>
-      <View style={styles.immersiveControls}>
-        <Pressable
-          style={[styles.immersiveButton, micMuted && styles.immersiveButtonActive]}
-          onPress={onMicToggle}
-          accessibilityRole="button"
-          accessibilityLabel={micMuted ? "Unmute microphone" : "Mute microphone"}
-        >
-          <IconSymbol name={micMuted ? "mic.slash.fill" : "mic.fill"} size={IconSize["3xl"]} color={Overlay.onDark} />
-          <Text style={styles.immersiveButtonLabel}>{micMuted ? "Unmute" : "Mute"}</Text>
-        </Pressable>
-        <Pressable style={styles.immersiveEndButton} onPress={onEnd} accessibilityRole="button" accessibilityLabel="End call">
-          <IconSymbol name="phone.down.fill" size={IconSize["3xl"]} color={Overlay.onDark} />
-          <Text style={styles.immersiveButtonLabel}>End</Text>
-        </Pressable>
       </View>
     </Animated.View>
   );
@@ -426,7 +376,6 @@ export default function ConversationScreen() {
   const [isStarting, setIsStarting] = useState(false);
   const [selectedMode, setSelectedMode] = useState<SessionMode>("research");
   const [lastSessionFeed, setLastSessionFeed] = useState<typeof feedItems>([]);
-  const [immersiveMode, setImmersiveMode] = useState(false);
   const [textInput, setTextInput] = useState("");
   const [showTextInput, setShowTextInput] = useState(false);
   const scrollRef = useRef<FlashListRef<FeedItem>>(null);
@@ -476,23 +425,10 @@ export default function ConversationScreen() {
     prevSearching.current = isSearching;
   }, [isSearching]);
 
-  // Auto-enter immersive on first speaking
-  useEffect(() => {
-    if (isSpeaking && isConnected && feedItems.length <= 1) {
-      setImmersiveMode(true);
-    }
-  }, [isSpeaking, isConnected]);
-
-  // Exit immersive when results arrive
-  useEffect(() => {
-    const hasIntel = feedItems.some(f => f.type === "intel");
-    if (hasIntel && immersiveMode) setImmersiveMode(false);
-  }, [feedItems]);
 
   const handleStart = async (opts?: { context?: string; firstMessage?: string; mode?: SessionMode }) => {
     if (isStarting || isConnecting || isConnected) return;
     setIsStarting(true);
-    setImmersiveMode(false);
     setShowTextInput(false);
     try {
       await startSession({ ...opts, mode: opts?.mode ?? selectedMode });
@@ -505,7 +441,6 @@ export default function ConversationScreen() {
 
   const handleEnd = async () => {
     haptics.medium();
-    setImmersiveMode(false);
     await endSession();
     setMicMutedState(false);
     setShowTextInput(false);
@@ -718,9 +653,9 @@ export default function ConversationScreen() {
       {/* Header with mini orb */}
       <View style={styles.headerConnected}>
         <Text style={styles.wordmark}>Counter</Text>
-        <Pressable style={styles.headerCenter} onPress={() => setImmersiveMode(true)} accessibilityRole="button" accessibilityLabel="Enter immersive mode">
+        <View style={styles.headerCenter}>
           <MiniOrb isSpeaking={isSpeaking} isConnected={isConnected} isSearching={isSearching} phase={conversationPhase} />
-        </Pressable>
+        </View>
         <View style={styles.headerRight}>
           <Pressable onPress={() => { haptics.light(); router.push("/(app)/history"); }} hitSlop={12} accessibilityRole="button" accessibilityLabel="View history">
             <IconSymbol name="clock" size={IconSize.xl} color={Colors.mutedForeground as string} />
@@ -819,20 +754,6 @@ export default function ConversationScreen() {
         </View>
       </View>
 
-      {/* Immersive voice overlay */}
-      {immersiveMode && (
-        <ImmersiveVoiceOverlay
-          isSpeaking={isSpeaking}
-          isSearching={isSearching}
-          phase={conversationPhase}
-          mode={sessionMode}
-          micMuted={micMuted}
-          onMicToggle={handleMicToggle}
-          onEnd={handleEnd}
-          onDismiss={() => setImmersiveMode(false)}
-        />
-      )}
-      <StatusBar hidden={immersiveMode} animated />
     </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -1333,65 +1254,5 @@ const styles = StyleSheet.create({
     color: Colors.quaternaryLabel as string,
     textAlign: "center",
     paddingTop: Spacing.sm,
-  },
-  // --- Immersive voice overlay ---
-  immersiveOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 100,
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingTop: 60,
-    paddingBottom: 60,
-  },
-  immersiveDismiss: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Overlay.onDarkFill,
-  },
-  immersiveCenter: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing["2xl"],
-  },
-  immersivePhase: {
-    fontSize: FontSize["3xl"],
-    fontWeight: "600",
-    color: Overlay.onDarkSecondary,
-    letterSpacing: 0.5,
-  },
-  immersiveLiveHint: {
-    fontSize: FontSize.sm,
-    color: Overlay.onDarkTertiary,
-    fontWeight: "500",
-  },
-  immersiveControls: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing["4xl"],
-  },
-  immersiveButton: {
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  immersiveButtonActive: {
-    opacity: 0.6,
-  },
-  immersiveEndButton: {
-    alignItems: "center",
-    gap: Spacing.sm,
-    backgroundColor: Overlay.destructiveFill,
-    borderRadius: Radius.full,
-    width: 72,
-    height: 72,
-    justifyContent: "center",
-  },
-  immersiveButtonLabel: {
-    fontSize: FontSize.sm,
-    color: Overlay.onDarkTertiary,
-    fontWeight: "500",
   },
 });
