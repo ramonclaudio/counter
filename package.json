@@ -33,6 +33,7 @@
     "convex-helpers": "^0.1.114",
     "expo": "56.0.0-canary-20260305-5163746",
     "expo-application": "56.0.0-canary-20260305-5163746",
+    "expo-clipboard": "^55.0.9",
     "expo-constants": "56.0.0-canary-20260305-5163746",
     "expo-dev-client": "56.0.0-canary-20260305-5163746",
     "expo-device": "56.0.0-canary-20260305-5163746",
