@@ -4,14 +4,14 @@ import { MaterialCard } from '@/components/ui/material-card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ThemedText } from '@/components/ui/themed-text';
 import { Radius, type ColorPalette } from '@/constants/theme';
-import { FontSize, IconSize, LineHeight, MaxWidth, Spacing, TouchTarget, TAB_BAR_CLEARANCE } from '@/constants/layout';
+import { FontFamily, FontSize, IconSize, LineHeight, MaxWidth, Spacing, TouchTarget, TAB_BAR_CLEARANCE } from '@/constants/layout';
 import { Opacity, Size } from '@/constants/ui';
 import { useColors } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
 const dividerStyle = { height: Size.divider, marginLeft: Size.dividerMargin };
 const sectionStyle = { marginTop: Spacing['2xl'], paddingHorizontal: Spacing.xl, gap: Spacing.sm };
-const sectionTitleStyle = { fontSize: FontSize.md, fontWeight: '500' as const, textTransform: 'uppercase' as const, marginLeft: Spacing.xs, opacity: 0.6 };
+const sectionTitleStyle = { fontSize: FontSize.md, fontFamily: FontFamily.medium, textTransform: 'uppercase' as const, marginLeft: Spacing.xs, opacity: 0.6 };
 const cardStyle = { borderRadius: Radius.lg, borderCurve: 'continuous' as const, overflow: 'hidden' as const };
 
 function PrivacyItem({ icon, label, description, onPress, colors }: {
@@ -26,8 +26,8 @@ function PrivacyItem({ icon, label, description, onPress, colors }: {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md, flex: 1 }}>
         <IconSymbol name={icon} size={IconSize['2xl']} color={colors.mutedForeground} />
         <View style={{ flex: 1, gap: Spacing.xs / 2 }}>
-          <ThemedText style={{ fontSize: FontSize.xl }}>{label}</ThemedText>
-          <ThemedText style={{ fontSize: FontSize.md }} color={colors.mutedForeground}>{description}</ThemedText>
+          <ThemedText style={{ fontSize: FontSize.xl, fontFamily: FontFamily.regular }}>{label}</ThemedText>
+          <ThemedText style={{ fontSize: FontSize.md, fontFamily: FontFamily.regular }} color={colors.mutedForeground}>{description}</ThemedText>
         </View>
       </View>
       {onPress && <IconSymbol name="chevron.right" size={IconSize.md} color={colors.mutedForeground} />}
@@ -109,7 +109,7 @@ export default function PrivacyScreen() {
         <ThemedText style={sectionTitleStyle} color={colors.mutedForeground}>Your Rights</ThemedText>
         <MaterialCard style={cardStyle}>
           <View style={{ padding: Spacing.lg }}>
-            <ThemedText style={{ fontSize: FontSize.base, lineHeight: LineHeight.base }} color={colors.mutedForeground}>
+            <ThemedText style={{ fontSize: FontSize.base, fontFamily: FontFamily.regular, lineHeight: LineHeight.base }} color={colors.mutedForeground}>
               You can request a copy of your data or delete your account at any time from Settings → Delete Account.
               {'\n\n'}
               Your personal information is never sold to third parties.

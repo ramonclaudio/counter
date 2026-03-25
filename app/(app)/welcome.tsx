@@ -13,7 +13,7 @@ import Animated, {
 import { MiniOrb } from "@/components/counter/mini-orb";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors, Radius } from "@/constants/theme";
-import { Spacing, FontSize, IconSize } from "@/constants/layout";
+import { Spacing, FontSize, IconSize, FontFamily } from "@/constants/layout";
 import { haptics } from "@/lib/haptics";
 
 const ONBOARDING_KEY = "counter_onboarding_seen";
@@ -139,12 +139,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: FontSize["7xl"],
-    fontWeight: "700",
+    fontFamily: FontFamily.bold,
     color: Colors.foreground as string,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: FontSize.base,
+    fontFamily: FontFamily.regular,
     color: Colors.mutedForeground as string,
     textAlign: "center",
     lineHeight: 22,
@@ -161,6 +162,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: FontSize.base,
+    fontFamily: FontFamily.regular,
     color: Colors.foreground as string,
   },
   ctaWrap: {
@@ -180,7 +182,7 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     fontSize: FontSize.xl,
-    fontWeight: "600",
+    fontFamily: FontFamily.semiBold,
     color: Colors.onColor,
     letterSpacing: 0.3,
   },

@@ -5,6 +5,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ThemedText } from "@/components/ui/themed-text";
 import { Radius, type ColorPalette } from "@/constants/theme";
 import {
+  FontFamily,
   FontSize,
   IconSize,
   LineHeight,
@@ -19,8 +20,8 @@ import { haptics } from "@/lib/haptics";
 
 const dividerStyle = { height: Size.divider, marginLeft: Size.dividerMargin };
 const faqItemStyle = { padding: Spacing.lg, gap: Spacing.xs };
-const faqQuestionStyle = { fontSize: FontSize.xl, fontWeight: "500" as const };
-const faqAnswerStyle = { fontSize: FontSize.base, lineHeight: LineHeight.base };
+const faqQuestionStyle = { fontSize: FontSize.xl, fontFamily: FontFamily.medium };
+const faqAnswerStyle = { fontSize: FontSize.base, fontFamily: FontFamily.regular, lineHeight: LineHeight.base };
 
 function HelpItem({
   icon,
@@ -69,9 +70,9 @@ function HelpItem({
           color={colors.mutedForeground}
         />
         <View style={{ flex: 1, gap: Spacing.xs / 2 }}>
-          <ThemedText style={{ fontSize: FontSize.xl }}>{label}</ThemedText>
+          <ThemedText style={{ fontSize: FontSize.xl, fontFamily: FontFamily.regular }}>{label}</ThemedText>
           <ThemedText
-            style={{ fontSize: FontSize.md }}
+            style={{ fontSize: FontSize.md, fontFamily: FontFamily.regular }}
             color={colors.mutedForeground}
           >
             {description}
@@ -147,7 +148,7 @@ export default function HelpScreen() {
         <ThemedText
           style={{
             fontSize: FontSize.md,
-            fontWeight: "500",
+            fontFamily: FontFamily.medium,
             textTransform: "uppercase",
             marginLeft: Spacing.xs,
             opacity: 0.6,
@@ -191,7 +192,7 @@ export default function HelpScreen() {
         <ThemedText
           style={{
             fontSize: FontSize.md,
-            fontWeight: "500",
+            fontFamily: FontFamily.medium,
             textTransform: "uppercase",
             marginLeft: Spacing.xs,
             opacity: 0.6,

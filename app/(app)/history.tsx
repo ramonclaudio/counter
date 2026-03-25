@@ -17,7 +17,7 @@ import { useColors } from "@/hooks/use-theme";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors, Radius, AnimationColors } from "@/constants/theme";
-import { Spacing, FontSize, LineHeight, IconSize } from "@/constants/layout";
+import { Spacing, FontSize, LineHeight, IconSize, FontFamily } from "@/constants/layout";
 import { haptics } from "@/lib/haptics";
 
 function formatDate(ts: number): string {
@@ -177,11 +177,12 @@ const styles = StyleSheet.create({
   },
   backLabel: {
     fontSize: FontSize.xl,
+    fontFamily: FontFamily.regular,
     color: Colors.systemBlue as string,
   },
   title: {
     fontSize: FontSize["2xl"],
-    fontWeight: "700",
+    fontFamily: FontFamily.bold,
     color: Colors.foreground as string,
     letterSpacing: -0.3,
   },
@@ -214,12 +215,13 @@ const styles = StyleSheet.create({
   },
   rowTitle: {
     fontSize: FontSize.base,
-    fontWeight: "600",
+    fontFamily: FontFamily.semiBold,
     color: Colors.foreground as string,
     lineHeight: LineHeight.base,
   },
   rowPreview: {
     fontSize: FontSize.sm,
+    fontFamily: FontFamily.regular,
     color: Colors.tertiaryLabel as string,
     lineHeight: LineHeight.tight,
   },
@@ -231,6 +233,7 @@ const styles = StyleSheet.create({
   },
   rowMeta: {
     fontSize: FontSize.xs,
+    fontFamily: FontFamily.regular,
     color: Colors.mutedForeground as string,
   },
   intelBadge: {
@@ -244,16 +247,17 @@ const styles = StyleSheet.create({
   },
   intelBadgeText: {
     fontSize: FontSize.xs,
-    fontWeight: "500",
+    fontFamily: FontFamily.medium,
     color: AnimationColors.search,
   },
   rowDate: {
     fontSize: FontSize.sm,
+    fontFamily: FontFamily.regular,
     color: Colors.tertiaryLabel as string,
   },
   skeletonList: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xl, gap: Spacing.lg },
   skeletonRow: { flexDirection: "row", alignItems: "center", gap: Spacing.md, paddingVertical: Spacing.md },
   emptyState: { flex: 1, alignItems: "center", justifyContent: "center", gap: Spacing.md },
-  emptyTitle: { fontSize: FontSize.lg, fontWeight: "600", color: Colors.foreground as string },
-  emptySubtitle: { fontSize: FontSize.sm, color: Colors.mutedForeground as string },
+  emptyTitle: { fontSize: FontSize.lg, fontFamily: FontFamily.semiBold, color: Colors.foreground as string },
+  emptySubtitle: { fontSize: FontSize.sm, fontFamily: FontFamily.regular, color: Colors.mutedForeground as string },
 });

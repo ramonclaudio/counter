@@ -38,7 +38,7 @@ import { FeedItemView } from "@/components/counter/feed-item";
 import { PhaseBadge } from "@/components/counter/phase-badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors, Radius, AnimationColors, PhaseColors, PhaseGradients } from "@/constants/theme";
-import { Spacing, FontSize, TouchTarget, IconSize } from "@/constants/layout";
+import { Spacing, FontSize, TouchTarget, IconSize, FontFamily } from "@/constants/layout";
 import { haptics } from "@/lib/haptics";
 import { MODE_CONFIGS } from "@/constants/modes";
 import type { ConversationPhase, IntelCard, FeedItem, SessionMode } from "@/lib/types";
@@ -837,7 +837,7 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     fontSize: FontSize["2xl"],
-    fontWeight: "700",
+    fontFamily: FontFamily.bold,
     color: Colors.foreground as string,
     letterSpacing: -0.5,
     zIndex: 1,
@@ -853,7 +853,7 @@ const styles = StyleSheet.create({
   },
   homeGreeting: {
     fontSize: FontSize["5xl"],
-    fontWeight: "700",
+    fontFamily: FontFamily.bold,
     color: Colors.foreground as string,
     textAlign: "center",
     paddingHorizontal: Spacing["3xl"],
@@ -881,11 +881,12 @@ const styles = StyleSheet.create({
   },
   modeLabel: {
     fontSize: FontSize.sm,
-    fontWeight: "700",
+    fontFamily: FontFamily.bold,
     color: Colors.foreground as string,
   },
   modeDescription: {
     fontSize: FontSize.xs,
+    fontFamily: FontFamily.regular,
     color: Colors.tertiaryLabel as string,
     textAlign: "center",
     lineHeight: 14,
@@ -908,13 +909,13 @@ const styles = StyleSheet.create({
   },
   homeStartLabel: {
     fontSize: FontSize["3xl"],
-    fontWeight: "700",
+    fontFamily: FontFamily.bold,
     color: Colors.onColor,
     letterSpacing: 0.2,
   },
   homeSectionLabel: {
     fontSize: FontSize.sm,
-    fontWeight: "600",
+    fontFamily: FontFamily.semiBold,
     color: Colors.tertiaryLabel as string,
     textTransform: "uppercase",
     letterSpacing: 0.8,
@@ -941,7 +942,7 @@ const styles = StyleSheet.create({
   },
   homeCategoryLabel: {
     fontSize: FontSize.sm,
-    fontWeight: "600",
+    fontFamily: FontFamily.medium,
     color: Colors.foreground as string,
   },
   homeSuggestions: {
@@ -962,8 +963,8 @@ const styles = StyleSheet.create({
   },
   homeSuggestionText: {
     fontSize: FontSize.base,
+    fontFamily: FontFamily.medium,
     color: Colors.foreground as string,
-    fontWeight: "500",
   },
   // --- Orb ---
   orbArea: {
@@ -995,6 +996,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: FontSize.lg,
+    fontFamily: FontFamily.regular,
     color: Colors.mutedForeground as string,
     textAlign: "center",
     paddingHorizontal: Spacing["3xl"],
@@ -1002,6 +1004,7 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     fontSize: FontSize.base,
+    fontFamily: FontFamily.regular,
     color: Colors.mutedForeground as string,
   },
   statusBar: {
@@ -1019,6 +1022,7 @@ const styles = StyleSheet.create({
   },
   emptyHint: {
     fontSize: FontSize.sm,
+    fontFamily: FontFamily.regular,
     color: Colors.tertiaryLabel as string,
     textAlign: "center",
     paddingVertical: Spacing["4xl"],
@@ -1042,8 +1046,8 @@ const styles = StyleSheet.create({
   },
   suggestionText: {
     fontSize: FontSize.sm,
+    fontFamily: FontFamily.medium,
     color: Colors.foreground as string,
-    fontWeight: "500",
   },
   // --- Text Input ---
   textInputBar: {
@@ -1059,6 +1063,7 @@ const styles = StyleSheet.create({
   textInputField: {
     flex: 1,
     fontSize: FontSize.base,
+    fontFamily: FontFamily.regular,
     color: Colors.foreground as string,
     backgroundColor: Colors.secondarySystemFill as string,
     borderRadius: Radius["2xl"],
@@ -1097,7 +1102,7 @@ const styles = StyleSheet.create({
   },
   startLabel: {
     fontSize: FontSize.xl,
-    fontWeight: "600",
+    fontFamily: FontFamily.semiBold,
     color: Colors.onColor,
     letterSpacing: 0.3,
   },
@@ -1158,12 +1163,13 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: FontSize["4xl"],
-    fontWeight: "700",
+    fontFamily: FontFamily.bold,
     color: Colors.foreground as string,
     letterSpacing: -0.3,
   },
   summarySubtitle: {
     fontSize: FontSize.base,
+    fontFamily: FontFamily.regular,
     color: Colors.mutedForeground as string,
   },
   statsRow: {
@@ -1184,7 +1190,7 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: FontSize.sm,
-    fontWeight: "600",
+    fontFamily: FontFamily.semiBold,
   },
   bestPriceCard: {
     width: "100%",
@@ -1198,19 +1204,19 @@ const styles = StyleSheet.create({
   },
   bestPriceLabel: {
     fontSize: FontSize.xs,
-    fontWeight: "700",
+    fontFamily: FontFamily.bold,
     color: Colors.systemGreen as string,
     textTransform: "uppercase",
     letterSpacing: 0.6,
   },
   bestPriceTitle: {
     fontSize: FontSize.base,
-    fontWeight: "600",
+    fontFamily: FontFamily.medium,
     color: Colors.foreground as string,
   },
   bestPriceValue: {
     fontSize: FontSize["5xl"],
-    fontWeight: "800",
+    fontFamily: FontFamily.monoBold,
     color: Colors.systemGreen as string,
     fontVariant: ["tabular-nums"],
   },
@@ -1224,8 +1230,8 @@ const styles = StyleSheet.create({
   },
   feedbackLabel: {
     fontSize: FontSize.base,
+    fontFamily: FontFamily.medium,
     color: Colors.mutedForeground as string,
-    fontWeight: "500",
   },
   feedbackButtons: {
     flexDirection: "row",
@@ -1256,7 +1262,7 @@ const styles = StyleSheet.create({
   },
   followUpTitle: {
     fontSize: FontSize.lg,
-    fontWeight: "700",
+    fontFamily: FontFamily.bold,
     color: Colors.systemOrange as string,
   },
   followUpChips: {
@@ -1274,7 +1280,7 @@ const styles = StyleSheet.create({
   },
   followUpChipText: {
     fontSize: FontSize.sm,
-    fontWeight: "500",
+    fontFamily: FontFamily.medium,
     color: Colors.foreground as string,
   },
   dismissButton: {
@@ -1282,10 +1288,12 @@ const styles = StyleSheet.create({
   },
   dismissLabel: {
     fontSize: FontSize.base,
+    fontFamily: FontFamily.regular,
     color: Colors.mutedForeground as string,
   },
   disclaimer: {
     fontSize: FontSize.xs,
+    fontFamily: FontFamily.regular,
     color: Colors.quaternaryLabel as string,
     textAlign: "center",
     paddingTop: Spacing.sm,

@@ -8,6 +8,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ThemedText } from "@/components/ui/themed-text";
 import { Radius, type ColorPalette } from "@/constants/theme";
 import {
+  FontFamily,
   FontSize,
   IconSize,
   MaxWidth,
@@ -26,7 +27,7 @@ const sectionStyle = {
 };
 const sectionTitleStyle = {
   fontSize: FontSize.md,
-  fontWeight: "500" as const,
+  fontFamily: FontFamily.medium,
   textTransform: "uppercase" as const,
   marginLeft: Spacing.xs,
   opacity: 0.6,
@@ -68,7 +69,7 @@ function AboutItem({
           size={IconSize["2xl"]}
           color={colors.mutedForeground}
         />
-        <ThemedText style={{ fontSize: FontSize.xl }}>{label}</ThemedText>
+        <ThemedText style={{ fontSize: FontSize.xl, fontFamily: FontFamily.regular }}>{label}</ThemedText>
       </View>
       <View
         style={{ flexDirection: "row", alignItems: "center", gap: Spacing.sm }}
@@ -76,7 +77,7 @@ function AboutItem({
         {value && (
           <ThemedText
             selectable
-            style={{ fontSize: FontSize.xl }}
+            style={{ fontSize: FontSize.xl, fontFamily: FontFamily.regular }}
             color={colors.mutedForeground}
           >
             {value}
@@ -228,7 +229,7 @@ export default function AboutScreen() {
         <MaterialCard style={cardStyle}>
           <View style={{ padding: Spacing.lg, alignItems: "center" }}>
             <ThemedText
-              style={{ fontSize: FontSize.base }}
+              style={{ fontSize: FontSize.base, fontFamily: FontFamily.regular }}
               color={colors.mutedForeground}
             >
               © Copyright 2026 | All rights reserved.

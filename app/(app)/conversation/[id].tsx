@@ -13,7 +13,7 @@ import { useColors } from "@/hooks/use-theme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { IntelCard } from "@/components/counter/intel-card";
 import { Colors, OnImage, Radius, AnimationColors } from "@/constants/theme";
-import { Spacing, FontSize, LineHeight, IconSize } from "@/constants/layout";
+import { Spacing, FontSize, LineHeight, IconSize, FontFamily } from "@/constants/layout";
 import type { IntelCard as IntelCardType, Message } from "@/lib/types";
 
 function formatDate(ts: number): string {
@@ -244,6 +244,7 @@ const styles = StyleSheet.create({
   },
   backLabel: {
     fontSize: FontSize.xl,
+    fontFamily: FontFamily.regular,
     color: Colors.systemBlue as string,
   },
   headerCenter: {
@@ -253,12 +254,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: FontSize["2xl"],
-    fontWeight: "700",
+    fontFamily: FontFamily.bold,
     color: Colors.foreground as string,
     letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: FontSize.xs,
+    fontFamily: FontFamily.regular,
     color: Colors.mutedForeground as string,
   },
   tabBar: {
@@ -280,7 +282,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: FontSize.sm,
-    fontWeight: "600",
+    fontFamily: FontFamily.semiBold,
     color: Colors.mutedForeground as string,
   },
   tabTextActive: {
@@ -299,11 +301,13 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     fontSize: FontSize.sm,
+    fontFamily: FontFamily.regular,
     color: Colors.foreground as string,
     lineHeight: LineHeight.relaxed,
   },
   summaryMeta: {
     fontSize: FontSize.xs,
+    fontFamily: FontFamily.regular,
     color: Colors.tertiaryLabel as string,
   },
   collectedDataRow: {
@@ -322,12 +326,13 @@ const styles = StyleSheet.create({
   },
   collectedDataLabel: {
     fontSize: FontSize.xs,
+    fontFamily: FontFamily.regular,
     color: Colors.tertiaryLabel as string,
     textTransform: "capitalize",
   },
   collectedDataValue: {
     fontSize: FontSize.base,
-    fontWeight: "600",
+    fontFamily: FontFamily.semiBold,
     color: Colors.foreground as string,
   },
   center: {
@@ -338,6 +343,7 @@ const styles = StyleSheet.create({
   },
   muted: {
     fontSize: FontSize.base,
+    fontFamily: FontFamily.regular,
     color: Colors.mutedForeground as string,
   },
   scroll: {
@@ -368,7 +374,7 @@ const styles = StyleSheet.create({
   },
   intelSectionTitle: {
     fontSize: FontSize.sm,
-    fontWeight: "700",
+    fontFamily: FontFamily.bold,
     color: AnimationColors.search,
     textTransform: "uppercase",
     letterSpacing: 0.6,
@@ -401,6 +407,7 @@ const styles = StyleSheet.create({
   },
   bubbleText: {
     fontSize: FontSize.base,
+    fontFamily: FontFamily.regular,
     lineHeight: LineHeight.relaxed,
   },
   textUser: {
@@ -411,6 +418,7 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: FontSize.xs,
+    fontFamily: FontFamily.regular,
     alignSelf: "flex-end",
   },
   timestampUser: {
