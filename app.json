@@ -9,7 +9,7 @@
     "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.rmncldyo.counter",
+      "bundleIdentifier": "com.ramonclaudio.counter",
       "appleTeamId": "SWH9LXWCC3",
       "buildNumber": "1",
       "infoPlist": {
